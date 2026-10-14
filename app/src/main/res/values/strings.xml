@@ -495,4 +495,7 @@ If Apple simply refused the request, waiting and trying again is worth doing fir
     <string name="nearby_action_rename">Rename</string>
     <string name="nearby_action_delete">Delete</string>
     <string name="nearby_delete_confirm">Delete %1$d selected device(s)? Saved names and sighting history will be lost.</string>
+    <string name="login_continue_offline">Continue without signing in</string>
+    <string name="offline_mode_banner">No Apple account — only Bluetooth scanning works. Sign in to locate devices remotely.</string>
+    <string name="offline_mode_sign_in">Sign in</string>
 </resources>

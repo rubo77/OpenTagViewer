@@ -460,4 +460,7 @@
     <string name="nearby_action_rename">Переименовать</string>
     <string name="nearby_action_delete">Удалить</string>
     <string name="nearby_delete_confirm">Удалить выбранные устройства (%1$d)? Сохранённые имена и история наблюдений будут потеряны.</string>
+    <string name="login_continue_offline">Продолжить без входа</string>
+    <string name="offline_mode_banner">Нет аккаунта Apple — работает только поиск по Bluetooth. Войдите, чтобы видеть устройства издалека.</string>
+    <string name="offline_mode_sign_in">Войти</string>
 </resources>

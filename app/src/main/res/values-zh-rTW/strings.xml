@@ -460,4 +460,7 @@
     <string name="nearby_action_rename">重新命名</string>
     <string name="nearby_action_delete">刪除</string>
     <string name="nearby_delete_confirm">刪除所選的 %1$d 個裝置？已儲存的名稱和觀測歷史將遺失。</string>
+    <string name="login_continue_offline">不登入繼續</string>
+    <string name="offline_mode_banner">未登入 Apple 帳戶——僅藍牙掃描可用。登入後可遠端定位裝置。</string>
+    <string name="offline_mode_sign_in">登入</string>
 </resources>

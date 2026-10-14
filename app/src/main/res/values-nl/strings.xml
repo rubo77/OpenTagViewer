@@ -460,4 +460,7 @@ Als Apple het verzoek simpelweg weigerde, is even wachten en opnieuw proberen he
     <string name="nearby_action_rename">Hernoemen</string>
     <string name="nearby_action_delete">Verwijderen</string>
     <string name="nearby_delete_confirm">%1$d geselecteerde apparaten verwijderen? Opgeslagen namen en waarnemingsgeschiedenis gaan verloren.</string>
+    <string name="login_continue_offline">Doorgaan zonder in te loggen</string>
+    <string name="offline_mode_banner">Geen Apple-account — alleen Bluetooth-scannen werkt. Log in om apparaten op afstand te vinden.</string>
+    <string name="offline_mode_sign_in">Inloggen</string>
 </resources>

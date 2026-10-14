@@ -119,6 +119,9 @@ public class MyDevicesListActivity extends AppCompatActivity {
     /** The in-flight read of that, so leaving does not land on a menu that has gone. */
     private Disposable membershipLookup;
 
+    /** The account-presence watch feeding the offline banner; ends with the screen. */
+    private Disposable offlineBannerLookup;
+
     /** The visible owner of a history import while its blocking work runs on the IO scheduler. */
     private AlertDialog historyImportProgressDialog;
     private CircularProgressIndicator historyImportProgressIndicator;
@@ -265,6 +268,9 @@ public class MyDevicesListActivity extends AppCompatActivity {
         this.binding.setHandleClickPageMenu(this::showPageMenu);
         this.showSelectionBar(false);
 
+        this.binding.offlineModeSignIn.setOnClickListener(
+                v -> this.startActivity(new Intent(this, AppleLoginActivity.class)));
+
         RecyclerView recyclerView = findViewById(R.id.my_devices_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(deviceListAdaptor);
@@ -294,6 +300,7 @@ public class MyDevicesListActivity extends AppCompatActivity {
         });
 
         this.rememberWhetherTheAccountIsLinked();
+        this.watchOfflineBanner();
         this.fetchDeviceInfoAndRender();
     }
 
@@ -301,6 +308,9 @@ public class MyDevicesListActivity extends AppCompatActivity {
     protected void onDestroy() {
         if (this.membershipLookup != null && !this.membershipLookup.isDisposed()) {
             this.membershipLookup.dispose();
+        }
+        if (this.offlineBannerLookup != null && !this.offlineBannerLookup.isDisposed()) {
+            this.offlineBannerLookup.dispose();
         }
         this.dismissHistoryImportProgress();
         super.onDestroy();
@@ -886,6 +896,29 @@ public class MyDevicesListActivity extends AppCompatActivity {
                             Toast.makeText(this, R.string.refresh_from_account_failed,
                                     LENGTH_LONG).show();
                         });
+    }
+
+    /**
+     * Shows the offline banner while no Apple account is stored.
+     *
+     * <p>Reads the raw preference rather than {@code UserAuthRepository.getUserAuth}:
+     * presence of the record is the whole question, and decrypting it on every emission
+     * just to throw the body away would buy nothing. The flow stays subscribed rather than
+     * taking once, so signing in through the banner removes it on return without a restart.
+     * A read error is logged and leaves the banner hidden - showing it on a failure would
+     * claim a signed-in user is not.
+     */
+    private void watchOfflineBanner() {
+        this.offlineBannerLookup = UserAuthDataStore
+                .getInstance(this.getApplicationContext())
+                .data()
+                .map(prefs -> prefs.get(UserAuthDataStore.APPLE_ACCOUNT) != null)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        signedIn -> this.binding.offlineModeBanner.setVisibility(
+                                signedIn ? GONE : VISIBLE),
+                        error -> Log.e(TAG, "Could not read account presence", error));
     }
 
     private void rememberWhetherTheAccountIsLinked() {

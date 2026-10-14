@@ -460,4 +460,7 @@ Wenn Apple die Anfrage lediglich abgelehnt hat, lohnt es sich, zu warten und es 
     <string name="nearby_action_rename">Umbenennen</string>
     <string name="nearby_action_delete">Löschen</string>
     <string name="nearby_delete_confirm">%1$d ausgewählte Geräte löschen? Gespeicherte Namen und der Sichtungsverlauf gehen verloren.</string>
+    <string name="login_continue_offline">Ohne Anmeldung fortfahren</string>
+    <string name="offline_mode_banner">Kein Apple-Konto – nur Bluetooth-Suche funktioniert. Anmelden, um Geräte aus der Ferne zu orten.</string>
+    <string name="offline_mode_sign_in">Anmelden</string>
 </resources>

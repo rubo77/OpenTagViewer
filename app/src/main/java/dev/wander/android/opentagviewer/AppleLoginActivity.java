@@ -285,6 +285,13 @@ public class AppleLoginActivity extends AppCompatActivity {
         this.findViewById(R.id.login_terms_agree_button)
                 .setOnClickListener(v -> this.onAgreeToTerms());
 
+        // The BLE half of the app needs no account at all. This stays on screen even when
+        // sign-in works - the failure that leaves somebody stuck here is precisely when the
+        // nearby features are worth reaching for.
+        this.findViewById(R.id.login_continue_offline)
+                .setOnClickListener(v -> this.startActivity(
+                        new Intent(this, MyDevicesListActivity.class)));
+
         // **The terms box has to win the drag, or the contract cannot be read.**
         //
         // This whole screen is inside a vertical ScrollView, and the box holding the document is

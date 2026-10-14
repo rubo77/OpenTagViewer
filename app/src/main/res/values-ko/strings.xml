@@ -460,4 +460,7 @@ Apple이 요청을 거부한 것뿐이라면 잠시 기다렸다가 다시 시�
     <string name="nearby_action_rename">이름 바꾸기</string>
     <string name="nearby_action_delete">삭제</string>
     <string name="nearby_delete_confirm">선택한 기기 %1$d개를 삭제할까요? 저장된 이름과 감지 기록이 사라집니다.</string>
+    <string name="login_continue_offline">로그인 없이 계속</string>
+    <string name="offline_mode_banner">Apple 계정이 없습니다 — Bluetooth 검색만 작동합니다. 원격으로 기기를 찾으려면 로그인하세요.</string>
+    <string name="offline_mode_sign_in">로그인</string>
 </resources>

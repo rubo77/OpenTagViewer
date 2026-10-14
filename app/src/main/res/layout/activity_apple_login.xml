@@ -272,6 +272,20 @@
                     </LinearLayout>
                 </LinearLayout>
 
+                <!--
+                    The door for everything that does not need the account: nearby scanning,
+                    radar, imported tags. Signing in is still the way to a full app - this is
+                    a way off the login screen when it cannot be passed, not a second home.
+                -->
+                <Button
+                    android:id="@+id/login_continue_offline"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/login_continue_offline" />
+
             </LinearLayout>
 
             <!--

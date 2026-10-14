@@ -460,4 +460,7 @@ Appleが要求を拒否しただけなら、少し待ってからもう一度お
     <string name="nearby_action_rename">名前を変更</string>
     <string name="nearby_action_delete">削除</string>
     <string name="nearby_delete_confirm">選択した %1$d 件のデバイスを削除しますか？保存した名前と検出履歴は失われます。</string>
+    <string name="login_continue_offline">サインインせずに続行</string>
+    <string name="offline_mode_banner">Apple アカウントがありません。Bluetooth スキャンのみ利用できます。デバイスを遠隔で探すにはサインインしてください。</string>
+    <string name="offline_mode_sign_in">サインイン</string>
 </resources>

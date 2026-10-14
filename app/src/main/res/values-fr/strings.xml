@@ -442,4 +442,12 @@ Si Apple a simplement refusé la requête, il vaut mieux attendre et réessayer.
     <string name="nearby_rotation_confirm">Même appareil</string>
     <string name="nearby_rotation_dismiss">Autre appareil</string>
     <string name="nearby_rotation_migrated">« %1$s » reconnu avec sa nouvelle clé</string>
+    <string name="nearby_presence_toggle">Notifier quand un appareil nommé arrive ou part</string>
+    <string name="nearby_presence_channel">Surveillance des appareils nommés</string>
+    <string name="nearby_presence_channel_description">Affichée tant que les appareils Find My nommés sont surveillés</string>
+    <string name="nearby_presence_alert_channel">Alertes des appareils nommés</string>
+    <string name="nearby_presence_foreground_title">Surveillance des appareils nommés</string>
+    <string name="nearby_presence_foreground_text">Vous êtes averti quand un appareil Find My nommé arrive ou part</string>
+    <string name="nearby_presence_appeared">%1$s est à proximité</string>
+    <string name="nearby_presence_disappeared">%1$s est hors de portée</string>
 </resources>

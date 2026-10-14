@@ -5,7 +5,10 @@ import static android.view.View.VISIBLE;
 
 import static dev.wander.android.opentagviewer.util.android.TextChangedWatcherFactory.justWatchOnChanged;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -18,6 +21,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -35,11 +39,13 @@ import dev.wander.android.opentagviewer.ble.BlePermissions;
 import dev.wander.android.opentagviewer.ble.ForeignRotation;
 import dev.wander.android.opentagviewer.ble.ForeignTagIdLog;
 import dev.wander.android.opentagviewer.ble.ForeignTagNames;
+import dev.wander.android.opentagviewer.ble.ForeignTagWatch;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceBook;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceScanner;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceSighting;
 import dev.wander.android.opentagviewer.ble.NearbyRotationHeuristic;
 import dev.wander.android.opentagviewer.databinding.ActivityNearbyDevicesBinding;
+import dev.wander.android.opentagviewer.service.ForeignTagScanService;
 import dev.wander.android.opentagviewer.ui.compat.WindowPaddingUtil;
 import dev.wander.android.opentagviewer.ui.nearbydevices.ForeignTagRename;
 import dev.wander.android.opentagviewer.ui.nearbydevices.NearbyDeviceListAdaptor;
@@ -120,7 +126,7 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         this.names = new ForeignTagNames(this);
-        this.idLog = new ForeignTagIdLog(this.getApplicationContext().getFilesDir());
+        this.idLog = ForeignTagIdLog.get(this);
 
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_nearby_devices);
         WindowPaddingUtil.insetForSystemBars(this.binding.getRoot());
@@ -142,11 +148,18 @@ public class NearbyDevicesActivity extends AppCompatActivity {
 
         this.binding.nearbyRotationConfirm.setOnClickListener(v -> this.onRotationConfirmed());
         this.binding.nearbyRotationDismiss.setOnClickListener(v -> this.onRotationDismissed());
+
+        this.binding.nearbyPresenceSwitch.setOnCheckedChangeListener(
+                (button, checked) -> this.onPresenceWatchToggled(checked));
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        // The switch mirrors the stored setting rather than the service's liveness - it can
+        // be off while a stop is still winding down, and "requested" is what the user flipped.
+        this.binding.nearbyPresenceSwitch.setChecked(ForeignTagWatch.isEnabled(this));
 
         if (!BlePermissions.granted(this)) {
             if (!this.blePermissionRequested) {
@@ -416,6 +429,36 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         this.suggestedOldPrefix = null;
         this.suggestedNewPrefix = null;
         this.binding.nearbyRotationBanner.setVisibility(GONE);
+    }
+
+    /**
+     * Starts or stops the presence watch with the switch.
+     *
+     * <p>Notifications are asked for at the moment they become relevant - the same "ask late,
+     * accept a no" contract SettingsActivity uses for the background scan. A refusal leaves
+     * the service running invisibly, which is the user's call to make.
+     */
+    private void onPresenceWatchToggled(final boolean enabled) {
+        ForeignTagWatch.setEnabled(this, enabled);
+        if (enabled) {
+            this.askToShowNotifications();
+            ForeignTagScanService.start(this);
+        } else {
+            ForeignTagScanService.stop(this);
+        }
+    }
+
+    private void askToShowNotifications() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return;
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        ActivityCompat.requestPermissions(
+                this, new String[] {Manifest.permission.POST_NOTIFICATIONS},
+                NEARBY_PERMISSION_REQUEST_CODE + 1);
     }
 
     private void showEmptyState(final int textRes) {

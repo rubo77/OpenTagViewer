@@ -1,5 +1,7 @@
 package dev.wander.android.opentagviewer.ble;
 
+import android.content.Context;
+
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
@@ -120,6 +122,28 @@ public final class ForeignTagIdLog {
         }
     }
 
+    @Nullable
+    private static ForeignTagIdLog shared;
+
+    /**
+     * The one instance the process shares.
+     *
+     * <p><b>There must not be two of these.</b> The list screen and the presence service both
+     * keep this log: two instances would load once and then overwrite each other's additions
+     * on every flush - the survivor would be whoever wrote last, and the loser's whole
+     * session of sightings would vanish from the file. One shared map makes the file the
+     * serialization point instead of a casualty of it.
+     */
+    public static synchronized ForeignTagIdLog get(final Context context) {
+        if (shared == null) {
+            shared = new ForeignTagIdLog(
+                    context.getApplicationContext().getFilesDir());
+        }
+        return shared;
+    }
+
+    /** Direct construction for tests that want their own file rather than the shared one. */
+    @VisibleForTesting
     public ForeignTagIdLog(final File filesDir) {
         this.file = new File(filesDir, FILE_NAME);
         this.load();

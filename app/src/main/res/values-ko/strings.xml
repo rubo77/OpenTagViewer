@@ -442,4 +442,12 @@ Apple이 요청을 거부한 것뿐이라면 잠시 기다렸다가 다시 시�
     <string name="nearby_rotation_confirm">같은 기기</string>
     <string name="nearby_rotation_dismiss">다른 기기</string>
     <string name="nearby_rotation_migrated">새 키로 “%1$s”를 인식했습니다</string>
+    <string name="nearby_presence_toggle">이름 지정 기기가 오거나 가면 알림</string>
+    <string name="nearby_presence_channel">이름 지정 기기 감시</string>
+    <string name="nearby_presence_channel_description">이름 지정 Find My 기기를 감시하는 동안 표시됩니다</string>
+    <string name="nearby_presence_alert_channel">이름 지정 기기 알림</string>
+    <string name="nearby_presence_foreground_title">이름 지정 기기 감시 중</string>
+    <string name="nearby_presence_foreground_text">이름 지정 Find My 기기가 오거나 가면 알려드립니다</string>
+    <string name="nearby_presence_appeared">%1$s이(가) 근처에 있습니다</string>
+    <string name="nearby_presence_disappeared">%1$s이(가) 범위를 벗어났습니다</string>
 </resources>

@@ -442,4 +442,12 @@ Appleが要求を拒否しただけなら、少し待ってからもう一度お
     <string name="nearby_rotation_confirm">同じデバイス</string>
     <string name="nearby_rotation_dismiss">別のデバイス</string>
     <string name="nearby_rotation_migrated">「%1$s」を新しいキーで認識しました</string>
+    <string name="nearby_presence_toggle">名前付きデバイスの出入りを通知する</string>
+    <string name="nearby_presence_channel">名前付きデバイスの監視</string>
+    <string name="nearby_presence_channel_description">名前付きの Find My デバイスを監視中に表示されます</string>
+    <string name="nearby_presence_alert_channel">名前付きデバイスのアラート</string>
+    <string name="nearby_presence_foreground_title">名前付きデバイスを監視中</string>
+    <string name="nearby_presence_foreground_text">名前付きの Find My デバイスの出入りをお知らせします</string>
+    <string name="nearby_presence_appeared">%1$s が近くにあります</string>
+    <string name="nearby_presence_disappeared">%1$s が圏外になりました</string>
 </resources>

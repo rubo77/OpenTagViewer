@@ -135,6 +135,16 @@
             android:foregroundServiceType="location|connectedDevice" />
 
         <!--
+            Watches for named foreign Find My devices and alerts when they arrive or leave.
+            Opt-in via the nearby-devices screen; reads no position, so it declares only the
+            connected-device type rather than borrowing location it does not use.
+        -->
+        <service
+            android:name=".service.ForeignTagScanService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
+        <!--
             Loads Apple's ADI library in a process of its own, before the app loads it in its
             own. On some phones that library kills whatever process loads it (issue #232), and
             this way the process it kills is this one. See TryItElsewhereFirst.

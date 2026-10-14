@@ -442,4 +442,12 @@
     <string name="nearby_rotation_confirm">同一裝置</string>
     <string name="nearby_rotation_dismiss">不同裝置</string>
     <string name="nearby_rotation_migrated">已在新金鑰下識別出「%1$s」</string>
+    <string name="nearby_presence_toggle">當已命名裝置出現或離開時通知</string>
+    <string name="nearby_presence_channel">已命名裝置監視</string>
+    <string name="nearby_presence_channel_description">監視已命名的 Find My 裝置時顯示</string>
+    <string name="nearby_presence_alert_channel">已命名裝置提醒</string>
+    <string name="nearby_presence_foreground_title">正在監視已命名裝置</string>
+    <string name="nearby_presence_foreground_text">當已命名的 Find My 裝置出現或離開時會通知你</string>
+    <string name="nearby_presence_appeared">%1$s 在附近</string>
+    <string name="nearby_presence_disappeared">%1$s 已超出範圍</string>
 </resources>

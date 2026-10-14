@@ -442,4 +442,12 @@ Wenn Apple die Anfrage lediglich abgelehnt hat, lohnt es sich, zu warten und es 
     <string name="nearby_rotation_confirm">Gleiches Gerät</string>
     <string name="nearby_rotation_dismiss">Anderes Gerät</string>
     <string name="nearby_rotation_migrated">„%1$s“ unter neuem Schlüssel erkannt</string>
+    <string name="nearby_presence_toggle">Benachrichtigen, wenn ein benanntes Gerät kommt oder geht</string>
+    <string name="nearby_presence_channel">Überwachung benannter Geräte</string>
+    <string name="nearby_presence_channel_description">Wird angezeigt, solange benannte Find-My-Geräte überwacht werden</string>
+    <string name="nearby_presence_alert_channel">Benachrichtigungen über benannte Geräte</string>
+    <string name="nearby_presence_foreground_title">Benannte Geräte werden überwacht</string>
+    <string name="nearby_presence_foreground_text">Du wirst benachrichtigt, wenn ein benanntes Find-My-Gerät kommt oder geht</string>
+    <string name="nearby_presence_appeared">%1$s ist in der Nähe</string>
+    <string name="nearby_presence_disappeared">%1$s ist außer Reichweite</string>
 </resources>

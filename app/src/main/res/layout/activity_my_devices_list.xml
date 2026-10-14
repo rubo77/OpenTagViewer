@@ -173,6 +173,28 @@
                 android:textSize="16sp"
                 app:iconSize="22dp" />
 
+            <!--
+              The third way in, and the only one that needs nothing imported: the nearby
+              scan works on whatever Find My devices are in earshot, so it is the reason an
+              account-free install exists at all. It also lives in the page menu for a list
+              that already has contents; here it needs to be a button because this screen
+              is where somebody without an account lands and the overflow menu is not an
+              obvious place to look for the whole point of the app.
+            -->
+            <Button
+                android:id="@+id/my_devices_empty_nearby_button"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:paddingLeft="20dp"
+                android:paddingTop="9dp"
+                android:paddingRight="20dp"
+                android:paddingBottom="9dp"
+                android:text="@string/nearby_devices_menu_open"
+                android:textSize="16sp"
+                app:iconSize="22dp" />
+
         </LinearLayout>
 
     </LinearLayout>

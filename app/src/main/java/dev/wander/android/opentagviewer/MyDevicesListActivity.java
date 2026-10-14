@@ -285,6 +285,9 @@ public class MyDevicesListActivity extends AppCompatActivity {
         findViewById(R.id.my_devices_empty_wiki_link)
                 .setOnClickListener(v -> this.openExportGuide());
 
+        findViewById(R.id.my_devices_empty_nearby_button)
+                .setOnClickListener(v -> this.openNearbyScanner());
+
         this.getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -684,13 +687,18 @@ public class MyDevicesListActivity extends AppCompatActivity {
                 return true;
             }
             if (id == R.id.action_scan_nearby) {
-                this.startActivity(new Intent(this, NearbyDevicesActivity.class));
+                this.openNearbyScanner();
                 return true;
             }
             return false;
         });
 
         menu.show();
+    }
+
+    /** Every Find My device in earshot - the one thing this screen offers without an account. */
+    private void openNearbyScanner() {
+        this.startActivity(new Intent(this, NearbyDevicesActivity.class));
     }
 
     private void importHistory(@NonNull final Uri uri) {

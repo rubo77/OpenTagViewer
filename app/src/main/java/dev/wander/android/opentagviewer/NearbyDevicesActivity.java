@@ -21,16 +21,20 @@ import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import dev.wander.android.opentagviewer.ble.BlePermissions;
+import dev.wander.android.opentagviewer.ble.ForeignTagIdLog;
 import dev.wander.android.opentagviewer.ble.ForeignTagNames;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceBook;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceScanner;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceSighting;
+import dev.wander.android.opentagviewer.ble.NearbyRotationHeuristic;
 import dev.wander.android.opentagviewer.databinding.ActivityNearbyDevicesBinding;
 import dev.wander.android.opentagviewer.ui.compat.WindowPaddingUtil;
 import dev.wander.android.opentagviewer.ui.nearbydevices.ForeignTagRename;
@@ -71,6 +75,19 @@ public class NearbyDevicesActivity extends AppCompatActivity {
     private final NearbyDeviceScanner scanner = new NearbyDeviceScanner();
     private final NearbyDeviceBook book = new NearbyDeviceBook();
     private ForeignTagNames names;
+    private ForeignTagIdLog idLog;
+
+    /**
+     * Prefixes the user already answered "different device" for, this session.
+     *
+     * <p>Session-only on purpose: persisting a rejection would freeze the answer even after
+     * the tag really did rotate again, while the cost of re-asking next launch is one banner.
+     */
+    private final Set<String> dismissedSuggestions = new HashSet<>();
+
+    /** The pair currently offered in the banner, or null while none is shown. */
+    private String suggestedOldPrefix;
+    private String suggestedNewPrefix;
 
     private ActivityNearbyDevicesBinding binding;
     private NearbyDeviceListAdaptor adaptor;
@@ -99,6 +116,7 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         this.names = new ForeignTagNames(this);
+        this.idLog = new ForeignTagIdLog(this.getApplicationContext().getFilesDir());
 
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_nearby_devices);
         WindowPaddingUtil.insetForSystemBars(this.binding.getRoot());
@@ -117,6 +135,9 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         final RecyclerView list = findViewById(R.id.nearby_devices_list);
         list.setLayoutManager(new LinearLayoutManager(this));
         list.setAdapter(this.adaptor);
+
+        this.binding.nearbyRotationConfirm.setOnClickListener(v -> this.onRotationConfirmed());
+        this.binding.nearbyRotationDismiss.setOnClickListener(v -> this.onRotationDismissed());
     }
 
     @Override
@@ -157,6 +178,7 @@ public class NearbyDevicesActivity extends AppCompatActivity {
             this.scanRetrySubscription.dispose();
             this.scanRetrySubscription = null;
         }
+        this.idLog.flush();
         super.onPause();
     }
 
@@ -181,6 +203,9 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         this.scanUnavailable = false;
         this.scanSubscription = this.scanner.scan(this.getApplicationContext())
                 .subscribeOn(Schedulers.io())
+                // File IO belongs on the scan thread, not after observeOn: a flushed write on
+                // the main thread would hitch the list every few seconds.
+                .doOnNext(this.idLog::hear)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(this::onSighting,
                         error -> Log.e(TAG, "Nearby device scan failed", error),
@@ -228,6 +253,93 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         this.binding.nearbyDevicesEmptyState.setVisibility(GONE);
         this.adaptor.setRows(rows);
         this.adaptor.notifyDataSetChanged();
+
+        this.maybeOfferRotation(rows);
+    }
+
+    /**
+     * The rotation question, asked once a plausible pair exists.
+     *
+     * <p>Runs on the one-second refresh rather than per frame: the heuristic waits for the
+     * named prefix to go quiet, and quiet is a thing time decides, not a new advertisement.
+     * Shows the closest match - smallest gap between the named prefix's last hearing and the
+     * unnamed one's first - because several departed names and several new faces can overlap.
+     */
+    private void maybeOfferRotation(final List<NearbyDeviceSighting> rows) {
+        if (this.suggestedNewPrefix != null) {
+            return; // one question at a time, and it is already on screen
+        }
+
+        final long now = System.currentTimeMillis();
+        final Map<String, String> names = this.names.all();
+        long bestGap = Long.MAX_VALUE;
+        String bestOld = null;
+        String bestNew = null;
+
+        for (final NearbyDeviceSighting row : rows) {
+            final String newPrefix = row.getKeyPrefix();
+            if (names.containsKey(newPrefix) || this.dismissedSuggestions.contains(newPrefix)) {
+                continue;
+            }
+            final ForeignTagIdLog.Entry newEntry = this.idLog.entry(newPrefix);
+            if (newEntry == null) {
+                continue;
+            }
+
+            for (final Map.Entry<String, ForeignTagIdLog.Entry> old
+                    : this.idLog.entries().entrySet()) {
+                final String oldPrefix = old.getKey();
+                if (newPrefix.equals(oldPrefix)
+                        || !names.containsKey(oldPrefix)
+                        || old.getValue().getRotatedInto() != null) {
+                    continue;
+                }
+                if (!NearbyRotationHeuristic.couldBeRotation(
+                        old.getValue().getLastSeenMs(), newEntry.getFirstSeenMs(), now)) {
+                    continue;
+                }
+                final long gap = newEntry.getFirstSeenMs() - old.getValue().getLastSeenMs();
+                if (gap < bestGap) {
+                    bestGap = gap;
+                    bestOld = oldPrefix;
+                    bestNew = newPrefix;
+                }
+            }
+        }
+
+        if (bestNew != null) {
+            this.suggestedOldPrefix = bestOld;
+            this.suggestedNewPrefix = bestNew;
+            this.binding.nearbyRotationText.setText(
+                    getString(R.string.nearby_rotation_suggestion, names.get(bestOld)));
+            this.binding.nearbyRotationBanner.setVisibility(VISIBLE);
+        }
+    }
+
+    private void onRotationConfirmed() {
+        if (this.suggestedOldPrefix == null || this.suggestedNewPrefix == null) {
+            return;
+        }
+        final String name = this.names.nameFor(this.suggestedOldPrefix);
+        this.names.rename(this.suggestedOldPrefix, null);
+        this.names.rename(this.suggestedNewPrefix, name);
+        this.idLog.markRotated(this.suggestedOldPrefix, this.suggestedNewPrefix);
+        this.idLog.flush();
+        this.hideRotationBanner();
+        this.rebuildList();
+    }
+
+    private void onRotationDismissed() {
+        if (this.suggestedNewPrefix != null) {
+            this.dismissedSuggestions.add(this.suggestedNewPrefix);
+        }
+        this.hideRotationBanner();
+    }
+
+    private void hideRotationBanner() {
+        this.suggestedOldPrefix = null;
+        this.suggestedNewPrefix = null;
+        this.binding.nearbyRotationBanner.setVisibility(GONE);
     }
 
     private void showEmptyState(final int textRes) {

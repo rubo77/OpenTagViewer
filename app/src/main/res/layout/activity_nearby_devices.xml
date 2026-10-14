@@ -18,6 +18,45 @@
             app:onClickBack="@{handleClickBack}"
             app:pageTitle="@{@string/nearby_devices_title}" />
 
+        <!-- Offered while a named tag seems to have rotated its key: confirm moves the name
+             onto the new prefix, dismiss silences the question for this session. Hidden
+             unless the rotation heuristic has a candidate. -->
+        <LinearLayout
+            android:id="@+id/nearby_rotation_banner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/nearby_rotation_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp"
+                tools:text="This might be “Keys” broadcasting a new key" />
+
+            <Button
+                android:id="@+id/nearby_rotation_confirm"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/nearby_rotation_confirm" />
+
+            <Button
+                android:id="@+id/nearby_rotation_dismiss"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/nearby_rotation_dismiss" />
+
+        </LinearLayout>
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/nearby_devices_list"
             android:layout_width="match_parent"

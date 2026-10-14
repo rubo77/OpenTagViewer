@@ -450,4 +450,10 @@ Appleが要求を拒否しただけなら、少し待ってからもう一度お
     <string name="nearby_presence_foreground_text">名前付きの Find My デバイスの出入りをお知らせします</string>
     <string name="nearby_presence_appeared">%1$s が近くにあります</string>
     <string name="nearby_presence_disappeared">%1$s が圏外になりました</string>
+    <string name="nearby_filter_all">すべて</string>
+    <string name="nearby_filter_own">自分の</string>
+    <string name="nearby_filter_named">名前付き</string>
+    <string name="nearby_filter_unnamed">名前なし</string>
+    <string name="nearby_export">検出履歴を共有</string>
+    <string name="nearby_filter_online">オンライン</string>
 </resources>

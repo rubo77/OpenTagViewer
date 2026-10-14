@@ -450,4 +450,10 @@
     <string name="nearby_presence_foreground_text">Вы будете уведомлены, когда именованное устройство Find My появится или уйдёт</string>
     <string name="nearby_presence_appeared">%1$s рядом</string>
     <string name="nearby_presence_disappeared">%1$s вне зоны досягаемости</string>
+    <string name="nearby_filter_all">Все</string>
+    <string name="nearby_filter_own">Свои</string>
+    <string name="nearby_filter_named">Именованные</string>
+    <string name="nearby_filter_unnamed">Безымянные</string>
+    <string name="nearby_export">Поделиться наблюдениями</string>
+    <string name="nearby_filter_online">В сети</string>
 </resources>

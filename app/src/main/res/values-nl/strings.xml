@@ -450,4 +450,10 @@ Als Apple het verzoek simpelweg weigerde, is even wachten en opnieuw proberen he
     <string name="nearby_presence_foreground_text">Je krijgt een melding wanneer een benoemd Find My-apparaat komt of gaat</string>
     <string name="nearby_presence_appeared">%1$s is in de buurt</string>
     <string name="nearby_presence_disappeared">%1$s is buiten bereik</string>
+    <string name="nearby_filter_all">Alle</string>
+    <string name="nearby_filter_own">Eigen</string>
+    <string name="nearby_filter_named">Benoemd</string>
+    <string name="nearby_filter_unnamed">Naamloos</string>
+    <string name="nearby_export">Waarnemingen delen</string>
+    <string name="nearby_filter_online">Online</string>
 </resources>

@@ -485,4 +485,10 @@ If Apple simply refused the request, waiting and trying again is worth doing fir
     <string name="nearby_presence_foreground_text">You are told when a named Find My device arrives or leaves</string>
     <string name="nearby_presence_appeared">%1$s is nearby</string>
     <string name="nearby_presence_disappeared">%1$s is out of range</string>
+    <string name="nearby_filter_all">All</string>
+    <string name="nearby_filter_own">Mine</string>
+    <string name="nearby_filter_named">Named</string>
+    <string name="nearby_filter_unnamed">Unnamed</string>
+    <string name="nearby_export">Share sightings</string>
+    <string name="nearby_filter_online">Online</string>
 </resources>

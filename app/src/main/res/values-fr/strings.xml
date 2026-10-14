@@ -450,4 +450,10 @@ Si Apple a simplement refusé la requête, il vaut mieux attendre et réessayer.
     <string name="nearby_presence_foreground_text">Vous êtes averti quand un appareil Find My nommé arrive ou part</string>
     <string name="nearby_presence_appeared">%1$s est à proximité</string>
     <string name="nearby_presence_disappeared">%1$s est hors de portée</string>
+    <string name="nearby_filter_all">Tous</string>
+    <string name="nearby_filter_own">Les miens</string>
+    <string name="nearby_filter_named">Nommés</string>
+    <string name="nearby_filter_unnamed">Non nommés</string>
+    <string name="nearby_export">Partager les détections</string>
+    <string name="nearby_filter_online">En ligne</string>
 </resources>

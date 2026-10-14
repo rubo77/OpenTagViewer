@@ -26,6 +26,9 @@ import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -36,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import dev.wander.android.opentagviewer.ble.BlePermissions;
+import dev.wander.android.opentagviewer.ble.DerivedAddressStore;
 import dev.wander.android.opentagviewer.ble.ForeignRotation;
 import dev.wander.android.opentagviewer.ble.ForeignTagIdLog;
 import dev.wander.android.opentagviewer.ble.ForeignTagNames;
@@ -49,10 +53,13 @@ import dev.wander.android.opentagviewer.service.ForeignTagScanService;
 import dev.wander.android.opentagviewer.ui.compat.WindowPaddingUtil;
 import dev.wander.android.opentagviewer.ui.nearbydevices.ForeignTagRename;
 import dev.wander.android.opentagviewer.ui.nearbydevices.NearbyDeviceListAdaptor;
+import dev.wander.android.opentagviewer.util.nearby.ForeignTagExport;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import androidx.core.content.FileProvider;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Every Find My device the radio can hear, not only the user's own tags.
@@ -121,12 +128,24 @@ public class NearbyDevicesActivity extends AppCompatActivity {
     /** Asked at most once per screen, for the same reason MapsActivity bounds its own request. */
     private boolean blePermissionRequested = false;
 
+    /** The row filter over the list - one rule at a time, matching the chip row's selection. */
+    private enum NearbyFilter { ALL, ONLINE, OWN, NAMED, UNNAMED }
+
+    private NearbyFilter filter = NearbyFilter.ALL;
+
+    /** The addresses this phone's own tags were ever derived to advertise on. */
+    private DerivedAddressStore derivedAddresses;
+    private Set<String> ownMacs = Set.of();
+    private long ownMacsLoadedMs = 0L;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         this.names = new ForeignTagNames(this);
         this.idLog = ForeignTagIdLog.get(this);
+        this.derivedAddresses =
+                new DerivedAddressStore(this.getApplicationContext().getFilesDir());
 
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_nearby_devices);
         WindowPaddingUtil.insetForSystemBars(this.binding.getRoot());
@@ -151,6 +170,11 @@ public class NearbyDevicesActivity extends AppCompatActivity {
 
         this.binding.nearbyPresenceSwitch.setOnCheckedChangeListener(
                 (button, checked) -> this.onPresenceWatchToggled(checked));
+
+        this.binding.nearbyFilterChips.setOnCheckedStateChangeListener(
+                (group, checkedIds) -> this.onFilterChanged(
+                        checkedIds.isEmpty() ? -1 : checkedIds.get(0)));
+        this.binding.nearbyExportButton.setOnClickListener(v -> this.shareLog());
     }
 
     @Override
@@ -272,6 +296,10 @@ public class NearbyDevicesActivity extends AppCompatActivity {
     }
 
     private void rebuildList() {
+        if (this.filter == NearbyFilter.OWN) {
+            this.refreshOwnMacsIfStale();
+        }
+
         final long nowMs = System.currentTimeMillis();
         final List<NearbyDeviceSighting> rows = this.book.snapshot(nowMs);
         // A prefix already linked to a successor is the same device shown twice - the live
@@ -281,8 +309,9 @@ public class NearbyDevicesActivity extends AppCompatActivity {
             return record != null && record.getRotatedInto() != null;
         });
         this.addUnheardNamedRows(rows, nowMs);
+        final List<NearbyDeviceSighting> filtered = this.filterRows(rows, nowMs);
 
-        if (rows.isEmpty()) {
+        if (filtered.isEmpty()) {
             this.showEmptyState(this.scanUnavailable
                     ? R.string.nearby_devices_scan_unavailable
                     : R.string.nearby_devices_empty);
@@ -291,10 +320,10 @@ public class NearbyDevicesActivity extends AppCompatActivity {
 
         this.binding.nearbyDevicesList.setVisibility(VISIBLE);
         this.binding.nearbyDevicesEmptyState.setVisibility(GONE);
-        this.adaptor.setRows(rows);
+        this.adaptor.setRows(filtered);
         this.adaptor.notifyDataSetChanged();
 
-        this.maybeOfferRotation(rows);
+        this.maybeOfferRotation(filtered);
     }
 
     /**
@@ -446,6 +475,119 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         } else {
             ForeignTagScanService.stop(this);
         }
+    }
+
+    private void onFilterChanged(final int chipId) {
+        if (chipId == R.id.nearby_filter_own) {
+            this.filter = NearbyFilter.OWN;
+        } else if (chipId == R.id.nearby_filter_online) {
+            this.filter = NearbyFilter.ONLINE;
+        } else if (chipId == R.id.nearby_filter_named) {
+            this.filter = NearbyFilter.NAMED;
+        } else if (chipId == R.id.nearby_filter_unnamed) {
+            this.filter = NearbyFilter.UNNAMED;
+        } else {
+            this.filter = NearbyFilter.ALL;
+        }
+        this.rebuildList();
+    }
+
+    /** Applies the selected row filter; ALL is the common path and does no work at all. */
+    private List<NearbyDeviceSighting> filterRows(
+            final List<NearbyDeviceSighting> rows, final long nowMs) {
+        if (this.filter == NearbyFilter.ALL) {
+            return rows;
+        }
+        final List<NearbyDeviceSighting> kept = new ArrayList<>();
+        for (final NearbyDeviceSighting s : rows) {
+            switch (this.filter) {
+                case ONLINE:
+                    if (!NearbyDeviceBook.isGone(s, nowMs)) {
+                        kept.add(s);
+                    }
+                    break;
+                case OWN:
+                    if (this.ownMacs.contains(s.getMac())) {
+                        kept.add(s);
+                    }
+                    break;
+                case NAMED:
+                    if (this.names.nameFor(s.getKeyPrefix()) != null) {
+                        kept.add(s);
+                    }
+                    break;
+                case UNNAMED:
+                    if (this.names.nameFor(s.getKeyPrefix()) == null) {
+                        kept.add(s);
+                    }
+                    break;
+                default:
+                    kept.add(s);
+            }
+        }
+        return kept;
+    }
+
+    /**
+     * Reloads the derived addresses behind the OWN filter, at most every 30s.
+     *
+     * <p>Membership over every stored range - not the current index - because the question is
+     * "is this MAC one of ours", and an address stays the owner's tag whichever index produced
+     * it. Read off the main thread: it is a directory of small files, but the list rebuilds
+     * every second and disk has no place in that path.
+     */
+    private void refreshOwnMacsIfStale() {
+        if (System.currentTimeMillis() - this.ownMacsLoadedMs < 30_000) {
+            return;
+        }
+        this.ownMacsLoadedMs = System.currentTimeMillis();
+        Observable.fromCallable(() -> this.derivedAddresses.allDerivedAddresses())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(macs -> {
+                    this.ownMacs = macs;
+                    if (this.filter == NearbyFilter.OWN) {
+                        this.rebuildList();
+                    }
+                }, error -> Log.w(TAG, "Could not read the derived own-tag addresses", error));
+    }
+
+    /**
+     * Writes names + sighting log as JSON and hands it to a share target.
+     *
+     * <p>Regenerated per share into the cache dir - the document is scratch space, and only
+     * {@code exports/} is reachable through the provider, so nothing else in the app's files
+     * is shareable by accident.
+     */
+    private void shareLog() {
+        // Serialising and writing a sighting log of any size is disk work - keep it off the
+        // main thread; only the chooser launch has to come back here.
+        Observable.fromCallable(() -> {
+            final String json =
+                    ForeignTagExport.toJson(this.names.all(), this.idLog.entries());
+            final File dir = new File(this.getCacheDir(), "exports");
+            if (!dir.isDirectory() && !dir.mkdirs()) {
+                throw new IOException("Could not create the export directory");
+            }
+            final File out = new File(dir, "foreign_tags.json");
+            try (FileOutputStream stream = new FileOutputStream(out)) {
+                stream.write(json.getBytes(StandardCharsets.UTF_8));
+            }
+            return out;
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(out -> {
+                    final Intent send = new Intent(Intent.ACTION_SEND)
+                            .setType("application/json")
+                            .putExtra(Intent.EXTRA_STREAM,
+                                    FileProvider.getUriForFile(
+                                            this,
+                                            this.getPackageName() + ".fileprovider", out))
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    this.startActivity(Intent.createChooser(
+                            send, this.getString(R.string.nearby_export)));
+                }, error -> Log.w(TAG, "Could not write the sighting-log export", error));
     }
 
     private void askToShowNotifications() {

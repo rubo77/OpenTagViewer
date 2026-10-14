@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -182,6 +183,35 @@ public final class DerivedAddressStore {
             Log.w(TAG, "Could not replace the derived addresses for beaconId=" + beaconId);
             temporary.delete();
         }
+    }
+
+    /**
+     * Every address ever derived for any tag, regardless of index.
+     *
+     * <p>Answers "is this MAC one of ours" rather than "which index": the nearby-devices
+     * screen's own-device filter only needs membership, and membership over the whole stored
+     * range is the reading that stays true across rotations - an address derived for last
+     * week is still this owner's tag if it ever was.
+     */
+    public Set<String> allDerivedAddresses() {
+        final Set<String> all = new HashSet<>();
+        final File[] files = this.directory.listFiles();
+        if (files == null) {
+            return all;
+        }
+
+        for (final File file : files) {
+            final String name = file.getName();
+            if (!name.endsWith(SUFFIX)) {
+                continue;
+            }
+            final Derived derived = this.load(
+                    name.substring(0, name.length() - SUFFIX.length()));
+            if (derived != null) {
+                all.addAll(derived.getAddresses().keySet());
+            }
+        }
+        return all;
     }
 
     /** Forgets what was derived for tags the user no longer has. */

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- What the nearby-devices export may hand to a share target. Cache rather than files:
+         the export is regenerated per share, so the file itself is scratch space. -->
+    <cache-path name="exports" path="exports/" />
+</paths>

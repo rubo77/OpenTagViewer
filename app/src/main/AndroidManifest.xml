@@ -156,6 +156,18 @@
             android:exported="false"
             android:process=":adiprobe" />
 
+        <!-- Hands the nearby-devices export to a share target. The file lives in the cache
+             dir and only paths file_paths.xml names are reachable through it. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <!-- Reached only when the app cannot name what went wrong - see the class doc. -->
         <activity
             android:name=".ui.error.ErrorReportActivity"

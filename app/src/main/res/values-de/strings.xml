@@ -450,4 +450,10 @@ Wenn Apple die Anfrage lediglich abgelehnt hat, lohnt es sich, zu warten und es 
     <string name="nearby_presence_foreground_text">Du wirst benachrichtigt, wenn ein benanntes Find-My-Gerät kommt oder geht</string>
     <string name="nearby_presence_appeared">%1$s ist in der Nähe</string>
     <string name="nearby_presence_disappeared">%1$s ist außer Reichweite</string>
+    <string name="nearby_filter_all">Alle</string>
+    <string name="nearby_filter_own">Eigene</string>
+    <string name="nearby_filter_named">Benannte</string>
+    <string name="nearby_filter_unnamed">Unbenannte</string>
+    <string name="nearby_export">Sichtungen teilen</string>
+    <string name="nearby_filter_online">Online</string>
 </resources>

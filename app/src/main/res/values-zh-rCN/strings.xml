@@ -450,4 +450,10 @@
     <string name="nearby_presence_foreground_text">当已命名的 Find My 设备出现或离开时会通知你</string>
     <string name="nearby_presence_appeared">%1$s 在附近</string>
     <string name="nearby_presence_disappeared">%1$s 已超出范围</string>
+    <string name="nearby_filter_all">全部</string>
+    <string name="nearby_filter_own">我的</string>
+    <string name="nearby_filter_named">已命名</string>
+    <string name="nearby_filter_unnamed">未命名</string>
+    <string name="nearby_export">分享侦测记录</string>
+    <string name="nearby_filter_online">在线</string>
 </resources>

@@ -467,4 +467,8 @@ Si Apple a simplement refusé la requête, il vaut mieux attendre et réessayer.
     <string name="offline_mode_banner_nothing">Aucun compte Apple et Bluetooth désactivé — rien ne fonctionne ici.</string>
     <string name="offline_mode_enable_bt">Activer</string>
     <string name="action_open_map">Ouvrir la carte</string>
+    <string name="nearby_device_kind_host">Appareil Apple · %1$s</string>
+    <string name="nearby_device_kind_airtag">AirTag · %1$s</string>
+    <string name="nearby_device_kind_accessory">Accessoire Localiser · %1$s</string>
+    <string name="nearby_device_kind_airpods">AirPods · %1$s</string>
 </resources>

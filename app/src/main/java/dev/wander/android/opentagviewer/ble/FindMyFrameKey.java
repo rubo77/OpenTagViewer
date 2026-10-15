@@ -157,6 +157,35 @@ public final class FindMyFrameKey {
         return -1;
     }
 
+    /**
+     * Every non-Find-My Apple record in the same blob, as a bitmask of type bytes.
+     *
+     * <p>The signature of a host, not a tag: an iPhone pads its advertisement with Nearby Info,
+     * Handoff and friends before the Find My frame, while a dedicated accessory broadcasts the
+     * bare beacon. A caller that wants to guess "phone or tracker" reads this rather than
+     * trusting a single frame's shape. Types at or above bit 63 are dropped - none are known
+     * that high, and the mask is evidence, not a registry.
+     */
+    static long otherAppleTypes(@Nullable final byte[] data) {
+        if (data == null) {
+            return 0;
+        }
+        long mask = 0;
+        int offset = 0;
+        while (offset + 2 <= data.length) {
+            final int type = data[offset] & 0xFF;
+            final int len = data[offset + 1] & 0xFF;
+            if (offset + 2 + len > data.length) {
+                break;
+            }
+            if (type != (TYPE_OFFLINE_FINDING & 0xFF) && type < 63) {
+                mask |= 1L << type;
+            }
+            offset += 2 + len;
+        }
+        return mask;
+    }
+
     /** {@code "AA:BB:CC:DD:EE:FF"} to six bytes, or null on anything else. */
     @Nullable
     private static byte[] macBytes(@Nullable final String macAddress) {

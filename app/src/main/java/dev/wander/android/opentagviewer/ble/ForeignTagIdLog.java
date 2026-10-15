@@ -86,6 +86,14 @@ public final class ForeignTagIdLog {
         private FindMyAdvertisement.State lastState;
 
         /**
+         * The raw status byte of the freshest frame - kept raw, not decoded, because its bits
+         * carry the device class {@link ForeignDeviceKind} reads, and keeping the byte leaves
+         * undecoded bits available to whatever learns to read them later.
+         */
+        @Nullable
+        private Integer lastStatusByte;
+
+        /**
          * The prefix this identity was confirmed to have rotated into, or null.
          *
          * <p>Once set, the old prefix is dead - the tag broadcasts the successor now, and a
@@ -116,10 +124,19 @@ public final class ForeignTagIdLog {
          */
         private final Set<String> rejectedPredecessors = new HashSet<>();
 
+        /**
+         * Every non-Find-My Apple record type ever heard in this prefix's blobs, OR-accumulated
+         * over all hearings - the evidence {@link ForeignDeviceKind} reads. Accumulated rather
+         * than last-seen because a host only pads some frames: one padded frame is proof of
+         * host, while one bare frame proves nothing.
+         */
+        private long otherAppleTypeMask;
+
         Entry(final long firstSeenMs, final long lastSeenMs, final int lastRssi,
               @Nullable final String lastMac,
               @Nullable final FindMyAdvertisement.BatteryLevel lastBatteryLevel,
               @Nullable final FindMyAdvertisement.State lastState,
+              @Nullable final Integer lastStatusByte,
               @Nullable final String rotatedInto,
               @Nullable final Double lastLatitude,
               @Nullable final Double lastLongitude,
@@ -131,6 +148,7 @@ public final class ForeignTagIdLog {
             this.lastMac = lastMac;
             this.lastBatteryLevel = lastBatteryLevel;
             this.lastState = lastState;
+            this.lastStatusByte = lastStatusByte;
             this.rotatedInto = rotatedInto;
             this.lastLatitude = lastLatitude;
             this.lastLongitude = lastLongitude;
@@ -160,6 +178,8 @@ public final class ForeignTagIdLog {
                     .rssi(this.lastRssi)
                     .batteryLevel(this.lastBatteryLevel)
                     .state(this.lastState)
+                    .statusByte(this.lastStatusByte != null ? this.lastStatusByte : 0)
+                    .otherAppleTypeMask(this.otherAppleTypeMask)
                     .seenAtMs(this.lastSeenMs)
                     .build();
         }
@@ -209,15 +229,17 @@ public final class ForeignTagIdLog {
      */
     public synchronized void hear(final NearbyDeviceSighting sighting,
                                   @Nullable final PhoneLocation.Fix fix) {
-        final Entry entry = this.entries.get(sighting.getKeyPrefix());
+        Entry entry = this.entries.get(sighting.getKeyPrefix());
         if (entry == null) {
-            this.entries.put(sighting.getKeyPrefix(), new Entry(
+            entry = new Entry(
                     sighting.getSeenAtMs(), sighting.getSeenAtMs(), sighting.getRssi(),
-                    sighting.getMac(), sighting.getBatteryLevel(), sighting.getState(), null,
+                    sighting.getMac(), sighting.getBatteryLevel(), sighting.getState(),
+                    sighting.getStatusByte(), null,
                     fix != null ? fix.getLatitude() : null,
                     fix != null ? fix.getLongitude() : null,
                     fix != null ? fix.getAccuracyMetres() : null,
-                    fix != null ? sighting.getSeenAtMs() : null));
+                    fix != null ? sighting.getSeenAtMs() : null);
+            this.entries.put(sighting.getKeyPrefix(), entry);
             this.evictOldestPastLimit();
         } else if (sighting.getSeenAtMs() >= entry.getLastSeenMs()) {
             entry.lastSeenMs = sighting.getSeenAtMs();
@@ -225,6 +247,7 @@ public final class ForeignTagIdLog {
             entry.lastMac = sighting.getMac();
             entry.lastBatteryLevel = sighting.getBatteryLevel();
             entry.lastState = sighting.getState();
+            entry.lastStatusByte = sighting.getStatusByte();
             if (fix != null) {
                 entry.lastLatitude = fix.getLatitude();
                 entry.lastLongitude = fix.getLongitude();
@@ -232,6 +255,9 @@ public final class ForeignTagIdLog {
                 entry.lastPositionMs = sighting.getSeenAtMs();
             }
         }
+        // Evidence accumulates outside the freshest-frame branch: a stale-timestamped frame
+        // still proves which blob shapes this prefix emits.
+        entry.otherAppleTypeMask |= sighting.getOtherAppleTypeMask();
         this.dirty = true;
 
         if (sighting.getSeenAtMs() - this.lastFlushMs > FLUSH_EVERY_MS) {
@@ -297,6 +323,10 @@ public final class ForeignTagIdLog {
         if (entry != null) {
             entry.rotatedInto = newPrefix;
             final Entry successor = this.entries.get(newPrefix);
+            if (successor != null) {
+                // Same device, new key: the class evidence it built up carries over.
+                successor.otherAppleTypeMask |= entry.otherAppleTypeMask;
+            }
             if (successor != null && !successor.hasPosition()) {
                 successor.lastLatitude = entry.lastLatitude;
                 successor.lastLongitude = entry.lastLongitude;
@@ -340,11 +370,17 @@ public final class ForeignTagIdLog {
                 if (e.getValue().getLastState() != null) {
                     o.put("state", e.getValue().getLastState().name());
                 }
+                if (e.getValue().getLastStatusByte() != null) {
+                    o.put("status", e.getValue().getLastStatusByte());
+                }
                 if (e.getValue().getRotatedInto() != null) {
                     o.put("rotatedInto", e.getValue().getRotatedInto());
                 }
                 if (!e.getValue().getRejectedPredecessors().isEmpty()) {
                     o.put("rejected", new JSONArray(e.getValue().getRejectedPredecessors()));
+                }
+                if (e.getValue().getOtherAppleTypeMask() != 0) {
+                    o.put("types", e.getValue().getOtherAppleTypeMask());
                 }
                 if (e.getValue().getLastLatitude() != null
                         && e.getValue().getLastLongitude() != null) {
@@ -395,6 +431,7 @@ public final class ForeignTagIdLog {
                         o.has("mac") ? o.getString("mac") : null,
                         enumField(o, "battery", FindMyAdvertisement.BatteryLevel.class, prefix),
                         enumField(o, "state", FindMyAdvertisement.State.class, prefix),
+                        o.has("status") ? o.getInt("status") : null,
                         o.has("rotatedInto") ? o.getString("rotatedInto") : null,
                         o.has("lat") ? o.getDouble("lat") : null,
                         o.has("lon") ? o.getDouble("lon") : null,
@@ -406,6 +443,9 @@ public final class ForeignTagIdLog {
                     for (int i = 0; i < rejected.length(); i++) {
                         loaded.getRejectedPredecessors().add(rejected.getString(i));
                     }
+                }
+                if (loaded != null) {
+                    loaded.otherAppleTypeMask = o.optLong("types", 0);
                 }
             }
         } catch (final IOException | JSONException unreadable) {

@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 
 import dev.wander.android.opentagviewer.R;
 import dev.wander.android.opentagviewer.ble.FindMyAdvertisement;
+import dev.wander.android.opentagviewer.ble.ForeignDeviceKind;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceBook;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceSighting;
 import dev.wander.android.opentagviewer.util.nearby.ProximityDistance;
@@ -54,6 +55,12 @@ public class NearbyDeviceListAdaptor
 
     /** prefix → user-given name; consulted on every bind so a rename shows on the next pass. */
     private final Function<String, String> nameResolver;
+
+    /**
+     * prefix → the coarse device class the evidence supports; consulted on every bind so an
+     * unnamed row's label improves the moment a telling frame arrives.
+     */
+    private final Function<String, ForeignDeviceKind> kindResolver;
 
     private final Resources resources;
 
@@ -89,10 +96,12 @@ public class NearbyDeviceListAdaptor
     public NearbyDeviceListAdaptor(
             @lombok.NonNull final Resources resources,
             @lombok.NonNull final Function<String, String> nameResolver,
+            @lombok.NonNull final Function<String, ForeignDeviceKind> kindResolver,
             @lombok.NonNull final Consumer<NearbyDeviceSighting> onClickCallback,
             @lombok.NonNull final BiConsumer<View, NearbyDeviceSighting> onLongClickCallback) {
         this.resources = resources;
         this.nameResolver = nameResolver;
+        this.kindResolver = kindResolver;
         this.onClickCallback = onClickCallback;
         this.onLongClickCallback = onLongClickCallback;
     }
@@ -125,7 +134,8 @@ public class NearbyDeviceListAdaptor
         final String givenName = this.nameResolver.apply(sighting.getKeyPrefix());
         final String title = givenName != null
                 ? givenName
-                : this.resources.getString(R.string.nearby_device_unnamed,
+                : this.resources.getString(
+                        unnamedString(this.kindResolver.apply(sighting.getKeyPrefix())),
                         sighting.getKeyPrefix().substring(0, 4));
         holder.getDeviceName().setText(title);
 
@@ -194,6 +204,21 @@ public class NearbyDeviceListAdaptor
             this.onLongClickCallback.accept(v, sighting);
             return true;
         });
+    }
+
+    /**
+     * The format an unnamed row's title takes for each evidence class. UNKNOWN keeps the
+     * generic "Find My device" rather than asserting a class nothing has proven.
+     */
+    private static int unnamedString(final ForeignDeviceKind kind) {
+        switch (kind) {
+            case APPLE_DEVICE: return R.string.nearby_device_kind_host;
+            case AIRTAG: return R.string.nearby_device_kind_airtag;
+            case THIRD_PARTY: return R.string.nearby_device_kind_accessory;
+            case AIRPODS: return R.string.nearby_device_kind_airpods;
+            case UNKNOWN:
+            default: return R.string.nearby_device_unnamed;
+        }
     }
 
     private static int batteryString(final FindMyAdvertisement.BatteryLevel level) {

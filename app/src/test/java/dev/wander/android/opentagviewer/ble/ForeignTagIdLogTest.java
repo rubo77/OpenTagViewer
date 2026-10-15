@@ -163,4 +163,49 @@ public class ForeignTagIdLogTest {
         assertFalse(reader.entry("111111111111").hasRejectedPredecessor("222222222222"));
         assertFalse(reader.entry("aabbccddeeff").hasRejectedPredecessor("111111111111"));
     }
+
+    @Test
+    public void accumulatesClassEvidenceAndPersistsIt() {
+        final ForeignTagIdLog writer = new ForeignTagIdLog(this.filesDir.getRoot());
+        writer.hear(sighting("aabbccddeeff"));
+        // A later hearing's blob carried Nearby Info - one padded frame is host proof.
+        writer.hear(NearbyDeviceSighting.builder()
+                .mac("AA:BB:CC:DD:EE:FF")
+                .keyPrefix("aabbccddeeff")
+                .rssi(-60)
+                .statusByte(0x10)
+                .state(State.SEPARATED)
+                .otherAppleTypeMask(1L << 0x10)
+                .seenAtMs(2_000)
+                .build());
+        writer.flush();
+
+        final ForeignTagIdLog reader = new ForeignTagIdLog(this.filesDir.getRoot());
+        final ForeignTagIdLog.Entry entry = reader.entry("aabbccddeeff");
+
+        assertEquals(1L << 0x10, entry.getOtherAppleTypeMask());
+        assertEquals(Integer.valueOf(0x10), entry.getLastStatusByte());
+        // The status byte's declared class wins over the blob's padding.
+        assertEquals(ForeignDeviceKind.AIRTAG,
+                ForeignDeviceKind.of(entry.getLastStatusByte(), entry.getOtherAppleTypeMask()));
+        assertEquals(1L << 0x10,
+                entry.toSighting("aabbccddeeff").getOtherAppleTypeMask());
+    }
+
+    @Test
+    public void rotationHandsTheClassEvidenceToTheSuccessor() {
+        final ForeignTagIdLog log = new ForeignTagIdLog(this.filesDir.getRoot());
+        log.hear(NearbyDeviceSighting.builder()
+                .keyPrefix("aabbccddeeff")
+                .rssi(-60)
+                .otherAppleTypeMask(1L << 0x0C)
+                .seenAtMs(1_000)
+                .build());
+        log.hear(sighting("ffee00112233"));
+
+        log.markRotated("aabbccddeeff", "ffee00112233");
+
+        assertEquals(1L << 0x0C,
+                log.entry("ffee00112233").getOtherAppleTypeMask());
+    }
 }

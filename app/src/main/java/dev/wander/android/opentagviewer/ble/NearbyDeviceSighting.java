@@ -61,6 +61,14 @@ public final class NearbyDeviceSighting {
     @Nullable
     private final FindMyAdvertisement.State state;
 
+    /**
+     * Bitmask of the other Apple advertisement types riding in the same manufacturer blob as
+     * this frame - Nearby Info, Handoff and friends an iPhone pads its broadcast with, which a
+     * dedicated accessory never emits. Evidence for the device class, not an identity: see
+     * {@link ForeignDeviceKind}.
+     */
+    private final long otherAppleTypeMask;
+
     /** Wall-clock time of the sighting, for ageing rows on the list. */
     private final long seenAtMs;
 
@@ -92,6 +100,7 @@ public final class NearbyDeviceSighting {
                 .statusByte(advertisement.getStatusByte())
                 .hint(key.getHint())
                 .state(advertisement.getState())
+                .otherAppleTypeMask(FindMyFrameKey.otherAppleTypes(appleManufacturerData))
                 .seenAtMs(seenAtMs)
                 .build();
     }

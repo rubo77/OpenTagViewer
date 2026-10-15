@@ -467,4 +467,8 @@
     <string name="offline_mode_banner_nothing">Нет аккаунта Apple и Bluetooth выключен — здесь ничего не работает.</string>
     <string name="offline_mode_enable_bt">Включить</string>
     <string name="action_open_map">Открыть карту</string>
+    <string name="nearby_device_kind_host">Устройство Apple · %1$s</string>
+    <string name="nearby_device_kind_airtag">AirTag · %1$s</string>
+    <string name="nearby_device_kind_accessory">Аксессуар «Локатор» · %1$s</string>
+    <string name="nearby_device_kind_airpods">AirPods · %1$s</string>
 </resources>

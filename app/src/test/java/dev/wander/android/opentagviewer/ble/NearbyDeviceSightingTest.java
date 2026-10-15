@@ -72,6 +72,18 @@ public class NearbyDeviceSightingTest {
     }
 
     @Test
+    public void paddedBlobMarksTheSightingAsHostShaped() {
+        final NearbyDeviceSighting padded = NearbyDeviceSighting.fromAdvertisement(
+                MAC, prefixed(separatedFrame()), -60, 1000L);
+        final NearbyDeviceSighting bare = NearbyDeviceSighting.fromAdvertisement(
+                MAC, separatedFrame(), -60, 1000L);
+
+        // Bit 16 = the 0x10 Nearby Info record that led the blob.
+        assertEquals(1L << 0x10, padded.getOtherAppleTypeMask());
+        assertEquals(0, bare.getOtherAppleTypeMask());
+    }
+
+    @Test
     public void nearbyFrameBehindAnotherTlvStillParses() {
         final NearbyDeviceSighting sighting = NearbyDeviceSighting.fromAdvertisement(
                 MAC, prefixed(nearbyFrame()), -60, 1000L);

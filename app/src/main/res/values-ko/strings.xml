@@ -467,4 +467,8 @@ Apple이 요청을 거부한 것뿐이라면 잠시 기다렸다가 다시 시�
     <string name="offline_mode_banner_nothing">Apple 계정도 없고 Bluetooth도 꺼져 있습니다 — 여기서 아무것도 작동하지 않습니다.</string>
     <string name="offline_mode_enable_bt">켜기</string>
     <string name="action_open_map">지도 열기</string>
+    <string name="nearby_device_kind_host">Apple 기기 · %1$s</string>
+    <string name="nearby_device_kind_airtag">AirTag · %1$s</string>
+    <string name="nearby_device_kind_accessory">\'나의 찾기\' 액세서리 · %1$s</string>
+    <string name="nearby_device_kind_airpods">AirPods · %1$s</string>
 </resources>

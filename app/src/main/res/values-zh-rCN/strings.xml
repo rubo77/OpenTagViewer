@@ -467,4 +467,8 @@
     <string name="offline_mode_banner_nothing">未登录 Apple 账户且蓝牙已关闭——此处功能均不可用。</string>
     <string name="offline_mode_enable_bt">启用</string>
     <string name="action_open_map">打开地图</string>
+    <string name="nearby_device_kind_host">Apple 设备 · %1$s</string>
+    <string name="nearby_device_kind_airtag">AirTag · %1$s</string>
+    <string name="nearby_device_kind_accessory">“查找”配件 · %1$s</string>
+    <string name="nearby_device_kind_airpods">AirPods · %1$s</string>
 </resources>

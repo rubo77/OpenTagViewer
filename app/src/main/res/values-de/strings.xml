@@ -467,4 +467,8 @@ Wenn Apple die Anfrage lediglich abgelehnt hat, lohnt es sich, zu warten und es 
     <string name="offline_mode_banner_nothing">Kein Apple-Konto und Bluetooth aus – hier funktioniert nichts.</string>
     <string name="offline_mode_enable_bt">Aktivieren</string>
     <string name="action_open_map">Karte öffnen</string>
+    <string name="nearby_device_kind_host">Apple-Gerät · %1$s</string>
+    <string name="nearby_device_kind_airtag">AirTag · %1$s</string>
+    <string name="nearby_device_kind_accessory">Find-My-Zubehör · %1$s</string>
+    <string name="nearby_device_kind_airpods">AirPods · %1$s</string>
 </resources>

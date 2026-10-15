@@ -120,4 +120,29 @@ public class FindMyFrameKeyTest {
         assertEquals("aa" + "bbccddeeff",
                 FindMyFrameKey.parse(nearbyFrame(0x02), MAC).keyPrefixHex());
     }
+
+    @Test
+    public void otherAppleTypesSeesTheRecordsAroundTheFindMyFrame() {
+        // A padded blob: Nearby Info and Handoff in front of 0x12, like a host sends.
+        final byte[] blob = new byte[]{
+                0x10, 0x01, 0x00,
+                0x0C, 0x02, 0x01, 0x02,
+                0x12, 0x02, 0x10, 0x01};
+        assertEquals((1L << 0x10) | (1L << 0x0C),
+                FindMyFrameKey.otherAppleTypes(blob));
+    }
+
+    @Test
+    public void otherAppleTypesIsZeroOnABareBeacon() {
+        // A dedicated accessory's blob is the Find My record alone.
+        assertEquals(0, FindMyFrameKey.otherAppleTypes(separatedFrame()));
+        assertEquals(0, FindMyFrameKey.otherAppleTypes(nearbyFrame(0x02)));
+        assertEquals(0, FindMyFrameKey.otherAppleTypes(null));
+    }
+
+    @Test
+    public void otherAppleTypesStopsAtATruncatedTail() {
+        final byte[] blob = new byte[]{0x10, 0x01, 0x00, 0x0C, 0x05, 0x01};
+        assertEquals(1L << 0x10, FindMyFrameKey.otherAppleTypes(blob));
+    }
 }

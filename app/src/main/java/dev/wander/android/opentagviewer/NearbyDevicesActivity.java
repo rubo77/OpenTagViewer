@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 
 import dev.wander.android.opentagviewer.ble.BlePermissions;
 import dev.wander.android.opentagviewer.ble.DerivedAddressStore;
+import dev.wander.android.opentagviewer.ble.ForeignDeviceKind;
 import dev.wander.android.opentagviewer.ble.ForeignRotation;
 import dev.wander.android.opentagviewer.ble.ForeignTagIdLog;
 import dev.wander.android.opentagviewer.ble.ForeignTagNames;
@@ -169,6 +170,7 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         this.adaptor = new NearbyDeviceListAdaptor(
                 this.getResources(),
                 this.names::nameFor,
+                this::kindFor,
                 this::onDeviceClicked,
                 this::onDeviceLongPressed);
 
@@ -461,6 +463,12 @@ public class NearbyDevicesActivity extends AppCompatActivity {
                         || newEntry.hasRejectedPredecessor(oldPrefix)) {
                     continue;
                 }
+                // A phone cannot rotate into a tag: where both identities have a proven
+                // class and the classes disagree, this is two devices overlapping, not
+                // one device continuing.
+                if (!kindFor(oldPrefix).isCompatibleWith(kindFor(newPrefix))) {
+                    continue;
+                }
                 if (!NearbyRotationHeuristic.couldBeLooseRotation(
                         old.getValue().getLastSeenMs(), old.getValue().getLastRssi(),
                         newEntry.getFirstSeenMs(), newEntry.getLastRssi(), now)) {
@@ -493,6 +501,20 @@ public class NearbyDevicesActivity extends AppCompatActivity {
                             names.get(bestOld), newDevice));
             this.binding.nearbyRotationBanner.setVisibility(VISIBLE);
         }
+    }
+
+    /**
+     * The device class the sighting log's accumulated evidence supports for a prefix. Lives
+     * here rather than on the sighting because a single frame lies: a host only pads some
+     * blobs, so only the OR of every frame ever heard from the prefix answers honestly.
+     */
+    private ForeignDeviceKind kindFor(final String prefix) {
+        final ForeignTagIdLog.Entry record = this.idLog.entry(prefix);
+        if (record == null) {
+            return ForeignDeviceKind.UNKNOWN;
+        }
+        return ForeignDeviceKind.of(
+                record.getLastStatusByte(), record.getOtherAppleTypeMask());
     }
 
     private void onRotationConfirmed() {

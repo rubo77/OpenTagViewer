@@ -267,8 +267,6 @@ public class MyDevicesListActivity extends AppCompatActivity {
         this.binding.setHandleClickCloseSelection(this::endSelection);
         this.binding.setHandleClickSelectionMenu(this::showSelectionMenu);
         this.binding.setHandleClickPageMenu(this::showPageMenu);
-        this.binding.setHandleClickMap(
-                () -> this.startActivity(new Intent(this, MapsActivity.class)));
         this.showSelectionBar(false);
 
         this.offlineBannerLookup = OfflineBanner.watch(this, this.binding.offlineModeBanner.getRoot());

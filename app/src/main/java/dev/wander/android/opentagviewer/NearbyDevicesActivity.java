@@ -167,6 +167,8 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_nearby_devices);
         WindowPaddingUtil.insetForSystemBars(this.binding.getRoot());
         this.binding.setHandleClickBack(this::finish);
+        this.binding.setHandleClickMap(
+                () -> this.startActivity(new Intent(this, MapsActivity.class)));
 
         if (this.getSupportActionBar() != null) {
             this.getSupportActionBar().hide();

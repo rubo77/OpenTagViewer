@@ -5,6 +5,7 @@
 
     <data>
         <variable name="handleClickBack" type="Runnable" />
+        <variable name="handleClickMap" type="Runnable" />
     </data>
 
     <LinearLayout
@@ -16,6 +17,7 @@
             android:id="@+id/settings_top_toolbar"
             layout="@layout/inline_top_toolbar"
             app:onClickBack="@{handleClickBack}"
+            app:onClickMap="@{handleClickMap}"
             app:pageTitle="@{@string/nearby_devices_title}" />
 
         <!-- Bluetooth is this screen's lifeblood; the account side matters less here but

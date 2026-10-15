@@ -7,7 +7,6 @@
         <variable name="handleClickBack" type="Runnable" />
         <variable name="handleClickCloseSelection" type="Runnable" />
         <variable name="handleClickSelectionMenu" type="Runnable" />
-        <variable name="handleClickMap" type="Runnable" />
         <variable name="handleClickPageMenu" type="Runnable" />
         <variable name="selectedCount" type="String" />
     </data>
@@ -30,7 +29,6 @@
             android:id="@+id/settings_top_toolbar"
             layout="@layout/inline_top_toolbar_with_button"
             app:onClickBack="@{handleClickBack}"
-            app:onClickMap="@{handleClickMap}"
             app:onClickMenu="@{handleClickPageMenu}"
             app:pageTitle="@{@string/my_devices}" />
 

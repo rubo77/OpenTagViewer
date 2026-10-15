@@ -22,10 +22,12 @@ import java.util.concurrent.TimeUnit;
 import dev.wander.android.opentagviewer.NearbyDevicesActivity;
 import dev.wander.android.opentagviewer.R;
 import dev.wander.android.opentagviewer.ble.BlePermissions;
+import dev.wander.android.opentagviewer.ble.ForeignRotation;
 import dev.wander.android.opentagviewer.ble.ForeignTagIdLog;
 import dev.wander.android.opentagviewer.ble.ForeignTagNames;
 import dev.wander.android.opentagviewer.ble.ForeignTagWatch;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceScanner;
+import dev.wander.android.opentagviewer.ble.NearbyDeviceSighting;
 import dev.wander.android.opentagviewer.ble.NearbyPresenceTracker;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -168,8 +170,17 @@ public class ForeignTagScanService extends Service {
         Log.i(TAG, "Watching for named foreign tags");
     }
 
-    private void onSighting(final dev.wander.android.opentagviewer.ble.NearbyDeviceSighting s) {
+    private void onSighting(final NearbyDeviceSighting s) {
         this.idLog.hear(s);
+
+        // A rotation that lands while the list screen is closed still has to be
+        // recognised here - otherwise every key change in the background arrives as
+        // a brand-new device and the name stays on a prefix that no longer speaks.
+        final String predecessor = ForeignRotation.autoMergeIfConfident(s, this.idLog, this.names);
+        if (predecessor != null) {
+            Log.i(TAG, "Foreign prefix " + predecessor
+                    + " rotated into " + s.getKeyPrefix() + "; carried the name over");
+        }
 
         // Only named identities are tracked: an alert about a prefix nobody named is noise.
         if (this.names.nameFor(s.getKeyPrefix()) == null) {

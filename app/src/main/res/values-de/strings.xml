@@ -441,4 +441,5 @@ Wenn Apple die Anfrage lediglich abgelehnt hat, lohnt es sich, zu warten und es 
     <string name="nearby_rotation_suggestion">Das könnte „%1$s“ mit einem neuen Schlüssel sein</string>
     <string name="nearby_rotation_confirm">Gleiches Gerät</string>
     <string name="nearby_rotation_dismiss">Anderes Gerät</string>
+    <string name="nearby_rotation_migrated">„%1$s“ unter neuem Schlüssel erkannt</string>
 </resources>

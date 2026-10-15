@@ -45,6 +45,19 @@ public final class NearbyRotationHeuristic {
     static final long MAX_MERGE_GAP_MS = 120_000;
 
     /**
+     * The tight timing bound for an unconfirmed merge. A rotation takes seconds - the tag
+     * swaps keys in place - so a pair this close in time is already rare.
+     */
+    static final long CONFIDENT_GAP_MS = 30_000;
+
+    /**
+     * How similar the signal strengths on either side of a confident merge must be. The tag
+     * does not move while it rotates, so its RSSI barely does either; a stranger arriving in
+     * the same half minute at a matching strength is the rare case this bound exists for.
+     */
+    static final int CONFIDENT_RSSI_DIFF_DB = 12;
+
+    /**
      * Whether these two timestamps look like one tag changing keys.
      *
      * @param namedLastSeenMs   when the named prefix was last heard
@@ -58,5 +71,22 @@ public final class NearbyRotationHeuristic {
         }
         final long gap = unnamedFirstSeenMs - namedLastSeenMs;
         return gap >= 0 && gap <= MAX_MERGE_GAP_MS;
+    }
+
+    /**
+     * The same question with the burden of proof a merge without confirmation needs: the
+     * timing window narrows to seconds, and the signal strength has to stay in range - a
+     * rotating tag does not move, so a pair that fails this is likelier two devices.
+     */
+    public static boolean isConfidentRotation(
+            final long oldLastSeenMs, final int oldRssi,
+            final long newFirstSeenMs, final int newRssi, final long nowMs) {
+        if (!couldBeRotation(oldLastSeenMs, newFirstSeenMs, nowMs)) {
+            return false;
+        }
+        if (newFirstSeenMs - oldLastSeenMs > CONFIDENT_GAP_MS) {
+            return false;
+        }
+        return Math.abs(newRssi - oldRssi) <= CONFIDENT_RSSI_DIFF_DB;
     }
 }

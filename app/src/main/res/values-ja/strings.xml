@@ -441,4 +441,5 @@ Appleが要求を拒否しただけなら、少し待ってからもう一度お
     <string name="nearby_rotation_suggestion">これは新しいキーを発信中の「%1$s」かもしれません</string>
     <string name="nearby_rotation_confirm">同じデバイス</string>
     <string name="nearby_rotation_dismiss">別のデバイス</string>
+    <string name="nearby_rotation_migrated">「%1$s」を新しいキーで認識しました</string>
 </resources>

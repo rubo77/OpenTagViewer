@@ -441,4 +441,5 @@
     <string name="nearby_rotation_suggestion">这可能是更换了新密钥的“%1$s”</string>
     <string name="nearby_rotation_confirm">同一设备</string>
     <string name="nearby_rotation_dismiss">不同设备</string>
+    <string name="nearby_rotation_migrated">已在新密钥下识别出“%1$s”</string>
 </resources>

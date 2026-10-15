@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -31,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import dev.wander.android.opentagviewer.ble.BlePermissions;
+import dev.wander.android.opentagviewer.ble.ForeignRotation;
 import dev.wander.android.opentagviewer.ble.ForeignTagIdLog;
 import dev.wander.android.opentagviewer.ble.ForeignTagNames;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceBook;
@@ -207,7 +209,23 @@ public class NearbyDevicesActivity extends AppCompatActivity {
                 .subscribeOn(Schedulers.io())
                 // File IO belongs on the scan thread, not after observeOn: a flushed write on
                 // the main thread would hitch the list every few seconds.
-                .doOnNext(this.idLog::hear)
+                .doOnNext(s -> {
+                    this.idLog.hear(s);
+                    // The merge belongs in the hear-path, not in the visible rows: a
+                    // rotation the screen never sees (background service, or a frame
+                    // swallowed between ticks) still has to carry the name over.
+                    if (ForeignRotation.autoMergeIfConfident(s, this.idLog, this.names)
+                            != null) {
+                        final String name = this.names.nameFor(s.getKeyPrefix());
+                        this.runOnUiThread(() -> {
+                            if (name != null) {
+                                Toast.makeText(this, getString(
+                                        R.string.nearby_rotation_migrated, name),
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                })
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(this::onSighting,
                         error -> Log.e(TAG, "Nearby device scan failed", error),
@@ -243,6 +261,12 @@ public class NearbyDevicesActivity extends AppCompatActivity {
     private void rebuildList() {
         final long nowMs = System.currentTimeMillis();
         final List<NearbyDeviceSighting> rows = this.book.snapshot(nowMs);
+        // A prefix already linked to a successor is the same device shown twice - the live
+        // row under the new key carries the name and the history, the old one is a corpse.
+        rows.removeIf(s -> {
+            final ForeignTagIdLog.Entry record = this.idLog.entry(s.getKeyPrefix());
+            return record != null && record.getRotatedInto() != null;
+        });
         this.addUnheardNamedRows(rows, nowMs);
 
         if (rows.isEmpty()) {
@@ -317,6 +341,11 @@ public class NearbyDevicesActivity extends AppCompatActivity {
      */
     private void maybeOfferRotation(final List<NearbyDeviceSighting> rows) {
         if (this.suggestedNewPrefix != null) {
+            if (this.names.nameFor(this.suggestedNewPrefix) != null) {
+                // The hear-path merge answered the question while it was still on
+                // screen: the unnamed candidate carries a name now.
+                this.hideRotationBanner();
+            }
             return; // one question at a time, and it is already on screen
         }
 
@@ -340,8 +369,8 @@ public class NearbyDevicesActivity extends AppCompatActivity {
                     : this.idLog.entries().entrySet()) {
                 final String oldPrefix = old.getKey();
                 if (newPrefix.equals(oldPrefix)
-                        || !names.containsKey(oldPrefix)
-                        || old.getValue().getRotatedInto() != null) {
+                        || old.getValue().getRotatedInto() != null
+                        || !names.containsKey(oldPrefix)) {
                     continue;
                 }
                 if (!NearbyRotationHeuristic.couldBeRotation(
@@ -370,11 +399,8 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         if (this.suggestedOldPrefix == null || this.suggestedNewPrefix == null) {
             return;
         }
-        final String name = this.names.nameFor(this.suggestedOldPrefix);
-        this.names.rename(this.suggestedOldPrefix, null);
-        this.names.rename(this.suggestedNewPrefix, name);
-        this.idLog.markRotated(this.suggestedOldPrefix, this.suggestedNewPrefix);
-        this.idLog.flush();
+        ForeignRotation.merge(this.suggestedOldPrefix, this.suggestedNewPrefix,
+                this.idLog, this.names);
         this.hideRotationBanner();
         this.rebuildList();
     }

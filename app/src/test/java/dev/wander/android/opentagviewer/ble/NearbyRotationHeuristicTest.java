@@ -45,4 +45,27 @@ public class NearbyRotationHeuristicTest {
                 0L, NearbyRotationHeuristic.MAX_MERGE_GAP_MS,
                 NearbyRotationHeuristic.MAX_MERGE_GAP_MS + NearbyRotationHeuristic.QUIET_FOR_MS));
     }
+
+    @Test
+    public void confidentMergeNeedsSecondsAndAMatchingSignal() {
+        // Old prefix quiet for 25s, new one appeared 5s after its last frame at nearly the
+        // same strength - the in-place rotation the auto-merge exists for.
+        assertTrue(NearbyRotationHeuristic.isConfidentRotation(
+                0L, -60, 5_000L, -63, 25_000L));
+    }
+
+    @Test
+    public void confidentMergeRefusesAWiderGap() {
+        // Loose-rule timing but 40s apart - could still be a rotation, just not one to act
+        // on without asking.
+        assertFalse(NearbyRotationHeuristic.isConfidentRotation(
+                0L, -60, 40_000L, -60, 50_000L));
+    }
+
+    @Test
+    public void confidentMergeRefusesAStrongerNewcomer() {
+        // Close in time but 20dB apart - a nearer stranger, not the same tag in place.
+        assertFalse(NearbyRotationHeuristic.isConfidentRotation(
+                0L, -60, 5_000L, -40, 25_000L));
+    }
 }

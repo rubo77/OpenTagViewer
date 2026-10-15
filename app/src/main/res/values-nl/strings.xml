@@ -441,4 +441,5 @@ Als Apple het verzoek simpelweg weigerde, is even wachten en opnieuw proberen he
     <string name="nearby_rotation_suggestion">Dit kan “%1$s” met een nieuwe sleutel zijn</string>
     <string name="nearby_rotation_confirm">Zelfde apparaat</string>
     <string name="nearby_rotation_dismiss">Ander apparaat</string>
+    <string name="nearby_rotation_migrated">“%1$s” herkend onder de nieuwe sleutel</string>
 </resources>

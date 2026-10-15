@@ -476,4 +476,5 @@ If Apple simply refused the request, waiting and trying again is worth doing fir
     <string name="nearby_rotation_suggestion">This might be “%1$s” broadcasting a new key</string>
     <string name="nearby_rotation_confirm">Same device</string>
     <string name="nearby_rotation_dismiss">Different one</string>
+    <string name="nearby_rotation_migrated">“%1$s” recognised under its new key</string>
 </resources>

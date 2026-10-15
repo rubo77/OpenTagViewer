@@ -441,4 +441,5 @@
     <string name="nearby_rotation_suggestion">Возможно, это «%1$s» с новым ключом</string>
     <string name="nearby_rotation_confirm">То же устройство</string>
     <string name="nearby_rotation_dismiss">Другое устройство</string>
+    <string name="nearby_rotation_migrated">«%1$s» распознан с новым ключом</string>
 </resources>

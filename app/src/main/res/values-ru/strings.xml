@@ -466,4 +466,5 @@
     <string name="offline_mode_banner_no_bluetooth">Bluetooth выключен — устройства поблизости не находятся.</string>
     <string name="offline_mode_banner_nothing">Нет аккаунта Apple и Bluetooth выключен — здесь ничего не работает.</string>
     <string name="offline_mode_enable_bt">Включить</string>
+    <string name="action_open_map">Открыть карту</string>
 </resources>

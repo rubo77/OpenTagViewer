@@ -466,4 +466,5 @@
     <string name="offline_mode_banner_no_bluetooth">蓝牙已关闭——无法找到附近的设备。</string>
     <string name="offline_mode_banner_nothing">未登录 Apple 账户且蓝牙已关闭——此处功能均不可用。</string>
     <string name="offline_mode_enable_bt">启用</string>
+    <string name="action_open_map">打开地图</string>
 </resources>

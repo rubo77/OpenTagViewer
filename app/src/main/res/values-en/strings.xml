@@ -466,4 +466,5 @@ If Apple simply refused the request, waiting and trying again is worth doing fir
     <string name="offline_mode_banner_no_bluetooth">Bluetooth is off — nearby devices cannot be found.</string>
     <string name="offline_mode_banner_nothing">No Apple account and Bluetooth is off — nothing here works.</string>
     <string name="offline_mode_enable_bt">Enable</string>
+    <string name="action_open_map">Open the map</string>
 </resources>

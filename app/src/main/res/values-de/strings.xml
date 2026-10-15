@@ -466,4 +466,5 @@ Wenn Apple die Anfrage lediglich abgelehnt hat, lohnt es sich, zu warten und es 
     <string name="offline_mode_banner_no_bluetooth">Bluetooth ist aus – Geräte in der Nähe werden nicht gefunden.</string>
     <string name="offline_mode_banner_nothing">Kein Apple-Konto und Bluetooth aus – hier funktioniert nichts.</string>
     <string name="offline_mode_enable_bt">Aktivieren</string>
+    <string name="action_open_map">Karte öffnen</string>
 </resources>

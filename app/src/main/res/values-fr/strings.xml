@@ -466,4 +466,5 @@ Si Apple a simplement refusé la requête, il vaut mieux attendre et réessayer.
     <string name="offline_mode_banner_no_bluetooth">Bluetooth désactivé — les appareils à proximité sont introuvables.</string>
     <string name="offline_mode_banner_nothing">Aucun compte Apple et Bluetooth désactivé — rien ne fonctionne ici.</string>
     <string name="offline_mode_enable_bt">Activer</string>
+    <string name="action_open_map">Ouvrir la carte</string>
 </resources>

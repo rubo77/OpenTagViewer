@@ -54,6 +54,16 @@
         android:title="@string/import_history" />
 
     <!--
+        The map is reachable from here too - for somebody without an account it is the only
+        way in: it was only ever opened after a sign-in, so the screen that collects stored
+        and Bluetooth-heard positions had no door. Next to the scan, because both are the
+        parts that work on what this phone can see.
+    -->
+    <item
+        android:id="@+id/action_open_map"
+        android:title="@string/action_open_map" />
+
+    <!--
         The other half of "what is around": this list is the user's own tags, the screen it
         opens is every Find My device in earshot - most of them somebody else's. Kept last and
         worded for what it is, so nobody mistakes a passive scan for a network lookup.

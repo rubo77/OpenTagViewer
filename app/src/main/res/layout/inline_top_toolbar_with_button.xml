@@ -5,9 +5,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     >
     <data>
+        <import type="android.view.View" />
         <variable name="pageTitle" type="String" />
         <variable name="onClickBack" type="Runnable" />
         <variable name="onClickMenu" type="Runnable" />
+        <variable name="onClickMap" type="Runnable" />
     </data>
 
     <LinearLayout
@@ -51,6 +53,24 @@
                 android:textSize="20sp"
                 tools:text="Page Title" />
 
+
+            <!-- Bound only where the screen has a map to open: unbound it takes no space,
+                 so the screens sharing this include keep their old layout. -->
+            <ImageButton
+                android:id="@+id/page_map_button"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/ripple_background"
+                android:backgroundTint="?android:attr/colorBackground"
+                android:contentDescription="@string/action_open_map"
+                android:onClick="@{() -> onClickMap.run()}"
+                android:padding="10dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/location_on_48px"
+                android:tint="?attr/colorOutline"
+                android:visibility="@{onClickMap != null ? View.VISIBLE : View.GONE}"
+                tools:visibility="visible" />
 
             <ImageButton
                 android:id="@+id/page_menu_button"

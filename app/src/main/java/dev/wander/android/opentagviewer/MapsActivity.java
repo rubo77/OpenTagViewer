@@ -1877,8 +1877,10 @@ public class MapsActivity extends AppCompatActivity implements IMapProvider.OnMa
 
     private void getAppleUser(Optional<AppleUserData> userAuth) {
         if (userAuth.isEmpty()) {
-            this.finish();
-            this.sendToLogin();
+            // No account is a choice, not a failure: the map still shows every cached location
+            // and every named foreign tag's last-heard position, and the banner on this screen
+            // already names what the missing leg costs.
+            this.showDevicesWithoutAccount();
             return;
         }
         // Somebody is signed in, which is the only moment this is worth raising: they can see
@@ -1927,10 +1929,12 @@ public class MapsActivity extends AppCompatActivity implements IMapProvider.OnMa
     }
 
     /**
-     * Shows the stored devices and their cached locations, then fetches fresh reports once
-     * {@code asyncAppleService} (the restored account) is ready.
+     * The stored beacons joined with their cached locations.
+     *
+     * <p>Shared by the signed-in and the account-less paths: both draw what the database holds
+     * before anything talks to Apple, and for somebody without an account that is all there is.
      */
-    private void showDevicesAndFetch(final Observable<Object> asyncAppleService) {
+    private Observable<List<BeaconInformation>> storedBeaconsAndLocations() {
         // get list of Beacons
         var asyncAllBeacons = this.beaconRepo.getAllBeacons()
                 .flatMap(BeaconDataParser::parseAsync)
@@ -1940,13 +1944,41 @@ public class MapsActivity extends AppCompatActivity implements IMapProvider.OnMa
         // (might be empty or might not be present for all of them)
         var asyncAllLocations = this.beaconRepo.getLastLocationsForAll();
 
-        var asyncBeaconData = Observable.zip(asyncAllBeacons, asyncAllLocations, (allBeacons, allLatestLocations) -> {
+        return Observable.zip(asyncAllBeacons, asyncAllLocations, (allBeacons, allLatestLocations) -> {
             // temporarily show cached beacon locations until we get the new ones!
             this.addBeaconLocationsToCurrent(MapUtils.toListOfOne(allLatestLocations));
             return allBeacons;
-        }).subscribeOn(Schedulers.computation())
-        .observeOn(AndroidSchedulers.mainThread())
-        .flatMap(allBeacons -> {
+        });
+    }
+
+    /**
+     * The map with nobody signed in: the stored devices and locations, and nothing fetched.
+     * {@code initialFetchComplete} is set all the same - the only fetch this session can make
+     * is done, and the periodic refresher's "not initialised" answer carries the rest.
+     */
+    private void showDevicesWithoutAccount() {
+        var async = this.storedBeaconsAndLocations()
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMap(allBeacons -> {
+                    this.showLastDeviceLocations();
+                    return this.updateBeaconGeocodings().andThen(Observable.just(allBeacons));
+                })
+                .doFinally(() -> this.initialFetchComplete = true)
+                .subscribe(allBeacons -> Log.d(TAG,
+                                "No Apple account; the map shows the stored locations only"),
+                        error -> Log.e(TAG, "Could not load the stored devices", error));
+    }
+
+    /**
+     * Shows the stored devices and their cached locations, then fetches fresh reports once
+     * {@code asyncAppleService} (the restored account) is ready.
+     */
+    private void showDevicesAndFetch(final Observable<Object> asyncAppleService) {
+        var asyncBeaconData = this.storedBeaconsAndLocations()
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMap(allBeacons -> {
             // show the locations for all the devices that were already in the cache
             this.showLastDeviceLocations();
             TagCardHelper.toggleRefreshLoadingAll(this.dynamicCardsForTag, true);

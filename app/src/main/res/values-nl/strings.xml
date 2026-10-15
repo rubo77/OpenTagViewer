@@ -466,4 +466,5 @@ Als Apple het verzoek simpelweg weigerde, is even wachten en opnieuw proberen he
     <string name="offline_mode_banner_no_bluetooth">Bluetooth staat uit — apparaten in de buurt worden niet gevonden.</string>
     <string name="offline_mode_banner_nothing">Geen Apple-account en Bluetooth uit — hier werkt niets.</string>
     <string name="offline_mode_enable_bt">Inschakelen</string>
+    <string name="action_open_map">Kaart openen</string>
 </resources>

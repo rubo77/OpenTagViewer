@@ -463,4 +463,7 @@ Appleが要求を拒否しただけなら、少し待ってからもう一度お
     <string name="login_continue_offline">サインインせずに続行</string>
     <string name="offline_mode_banner">Apple アカウントがありません。Bluetooth スキャンのみ利用できます。デバイスを遠隔で探すにはサインインしてください。</string>
     <string name="offline_mode_sign_in">サインイン</string>
+    <string name="offline_mode_banner_no_bluetooth">Bluetooth がオフです。近くのデバイスは見つかりません。</string>
+    <string name="offline_mode_banner_nothing">Apple アカウントなし、Bluetooth オフ — ここでは何も動作しません。</string>
+    <string name="offline_mode_enable_bt">有効にする</string>
 </resources>

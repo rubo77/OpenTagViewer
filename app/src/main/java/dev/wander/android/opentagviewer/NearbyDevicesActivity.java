@@ -50,6 +50,7 @@ import dev.wander.android.opentagviewer.ble.NearbyRotationHeuristic;
 import dev.wander.android.opentagviewer.databinding.ActivityNearbyDevicesBinding;
 import dev.wander.android.opentagviewer.service.ForeignTagScanService;
 import dev.wander.android.opentagviewer.ui.compat.WindowPaddingUtil;
+import dev.wander.android.opentagviewer.ui.login.OfflineBanner;
 import dev.wander.android.opentagviewer.ui.nearbydevices.ForeignTagRename;
 import dev.wander.android.opentagviewer.ui.nearbydevices.NearbyDeviceListAdaptor;
 import dev.wander.android.opentagviewer.util.nearby.ForeignTagExport;
@@ -110,6 +111,8 @@ public class NearbyDevicesActivity extends AppCompatActivity {
 
     private Disposable scanSubscription;
     private Disposable refreshSubscription;
+    /** The account/Bluetooth watch feeding the banner; resumes and pauses with the screen. */
+    private Disposable offlineBannerWatch;
 
     /**
      * Prefixes marked by long-press. The set being non-empty IS the selection mode - when the
@@ -201,6 +204,8 @@ public class NearbyDevicesActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
+        this.offlineBannerWatch = OfflineBanner.watch(this, this.binding.offlineModeBanner.getRoot());
+
         // The switch mirrors the stored setting rather than the service's liveness - it can
         // be off while a stop is still winding down, and "requested" is what the user flipped.
         this.binding.nearbyPresenceSwitch.setChecked(ForeignTagWatch.isEnabled(this));
@@ -227,6 +232,10 @@ public class NearbyDevicesActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        if (this.offlineBannerWatch != null) {
+            this.offlineBannerWatch.dispose();
+            this.offlineBannerWatch = null;
+        }
         if (this.scanSubscription != null) {
             this.scanSubscription.dispose();
             this.scanSubscription = null;

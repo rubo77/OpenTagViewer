@@ -463,4 +463,7 @@
     <string name="login_continue_offline">不登录继续</string>
     <string name="offline_mode_banner">未登录 Apple 账户——仅蓝牙扫描可用。登录后可远程定位设备。</string>
     <string name="offline_mode_sign_in">登录</string>
+    <string name="offline_mode_banner_no_bluetooth">蓝牙已关闭——无法找到附近的设备。</string>
+    <string name="offline_mode_banner_nothing">未登录 Apple 账户且蓝牙已关闭——此处功能均不可用。</string>
+    <string name="offline_mode_enable_bt">启用</string>
 </resources>

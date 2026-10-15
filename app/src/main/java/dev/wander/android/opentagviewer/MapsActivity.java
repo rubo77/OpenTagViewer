@@ -53,6 +53,7 @@ import dev.wander.android.opentagviewer.ui.compat.WindowPaddingUtil;
 import dev.wander.android.opentagviewer.ui.importing.BundlePasscodeDialog;
 import dev.wander.android.opentagviewer.ui.importing.ImportOutcome;
 import dev.wander.android.opentagviewer.ui.importing.ImportedButNotLocatedDialog;
+import dev.wander.android.opentagviewer.ui.login.OfflineBanner;
 import dev.wander.android.opentagviewer.ui.login.TwoFactorAgainOverlay;
 import dev.wander.android.opentagviewer.ui.settings.AnisetteUpgradeDialog;
 import dev.wander.android.opentagviewer.ui.settings.ICloudSetupOfferDialog;
@@ -271,6 +272,9 @@ public class MapsActivity extends AppCompatActivity implements IMapProvider.OnMa
      * {@link NearbyTagSightings}.
      */
     private final NearbyTagSightings nearbySightings = new NearbyTagSightings();
+
+    /** The account/Bluetooth watch feeding the offline banner; ends with the screen. */
+    private Disposable offlineBannerLookup;
 
     /** The in-flight nearby scan, disposed in {@link #onPause()} so the radio stops with the screen. */
     private Disposable nearbyWatchDisposable;
@@ -532,6 +536,8 @@ public class MapsActivity extends AppCompatActivity implements IMapProvider.OnMa
 
         this.binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(this.binding.getRoot());
+
+        this.offlineBannerLookup = OfflineBanner.watch(this, this.binding.offlineModeBanner.getRoot());
 
         this.userSettingsRepo = new UserSettingsRepository(
                 UserSettingsDataStore.getInstance(this.getApplicationContext()));
@@ -931,6 +937,9 @@ public class MapsActivity extends AppCompatActivity implements IMapProvider.OnMa
         // provider grew a fourth arm on each of them.
         if (this.mapProvider != null) {
             this.mapProvider.onDestroy();
+        }
+        if (this.offlineBannerLookup != null && !this.offlineBannerLookup.isDisposed()) {
+            this.offlineBannerLookup.dispose();
         }
     }
 

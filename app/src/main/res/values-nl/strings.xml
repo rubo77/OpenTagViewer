@@ -463,4 +463,7 @@ Als Apple het verzoek simpelweg weigerde, is even wachten en opnieuw proberen he
     <string name="login_continue_offline">Doorgaan zonder in te loggen</string>
     <string name="offline_mode_banner">Geen Apple-account — alleen Bluetooth-scannen werkt. Log in om apparaten op afstand te vinden.</string>
     <string name="offline_mode_sign_in">Inloggen</string>
+    <string name="offline_mode_banner_no_bluetooth">Bluetooth staat uit — apparaten in de buurt worden niet gevonden.</string>
+    <string name="offline_mode_banner_nothing">Geen Apple-account en Bluetooth uit — hier werkt niets.</string>
+    <string name="offline_mode_enable_bt">Inschakelen</string>
 </resources>

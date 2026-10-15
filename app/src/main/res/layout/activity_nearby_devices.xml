@@ -18,6 +18,12 @@
             app:onClickBack="@{handleClickBack}"
             app:pageTitle="@{@string/nearby_devices_title}" />
 
+        <!-- Bluetooth is this screen's lifeblood; the account side matters less here but
+             the strip reports both, and lights up pale when neither works. -->
+        <include
+            android:id="@+id/offline_mode_banner"
+            layout="@layout/inline_offline_banner" />
+
         <!-- Long-press marks rows instead of renaming: the bar counts the selection and
              offers rename (single row only) and delete for the marked prefixes. Hidden
              until the first row is marked. -->

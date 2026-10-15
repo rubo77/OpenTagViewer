@@ -95,6 +95,7 @@ import dev.wander.android.opentagviewer.ui.BeaconIcon;
 import dev.wander.android.opentagviewer.python.HardwareDescriber;
 import dev.wander.android.opentagviewer.python.icloud.AccessoryRenamer;
 import dev.wander.android.opentagviewer.python.icloud.ICloudFailures;
+import dev.wander.android.opentagviewer.ui.login.OfflineBanner;
 import dev.wander.android.opentagviewer.ui.login.SignInAgain;
 import dev.wander.android.opentagviewer.util.android.AppCryptographyUtil;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
@@ -155,6 +156,9 @@ public class DeviceInfoActivity extends AppCompatActivity
 
     /** The in-flight write to the account, so leaving the screen does not land on dead views. */
     private Disposable accountRename;
+
+    /** The account/Bluetooth watch feeding the offline banner; ends with the screen. */
+    private Disposable offlineBannerLookup;
 
     /** The in-flight BLE scan/GATT trigger, so leaving the screen stops it rather than
      * leaving a scan running or a result landing on dead views. */
@@ -242,6 +246,8 @@ public class DeviceInfoActivity extends AppCompatActivity
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_device_info);
         WindowPaddingUtil.insetForSystemBars(binding.getRoot());
+
+        this.offlineBannerLookup = OfflineBanner.watch(this, binding.offlineModeBanner.getRoot());
 
         binding.setHandleClickBack(this::handleEndActivity);
         binding.setHandleClickMenu(this::handleClickMenu);
@@ -958,6 +964,9 @@ public class DeviceInfoActivity extends AppCompatActivity
         // cancellable, which closes the GATT connection rather than leaving it dangling.
         if (this.playSoundNearby != null && !this.playSoundNearby.isDisposed()) {
             this.playSoundNearby.dispose();
+        }
+        if (this.offlineBannerLookup != null && !this.offlineBannerLookup.isDisposed()) {
+            this.offlineBannerLookup.dispose();
         }
         super.onDestroy();
     }

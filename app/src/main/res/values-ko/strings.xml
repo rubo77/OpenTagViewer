@@ -463,4 +463,7 @@ Apple이 요청을 거부한 것뿐이라면 잠시 기다렸다가 다시 시�
     <string name="login_continue_offline">로그인 없이 계속</string>
     <string name="offline_mode_banner">Apple 계정이 없습니다 — Bluetooth 검색만 작동합니다. 원격으로 기기를 찾으려면 로그인하세요.</string>
     <string name="offline_mode_sign_in">로그인</string>
+    <string name="offline_mode_banner_no_bluetooth">Bluetooth가 꺼져 있습니다 — 주변 기기를 찾을 수 없습니다.</string>
+    <string name="offline_mode_banner_nothing">Apple 계정도 없고 Bluetooth도 꺼져 있습니다 — 여기서 아무것도 작동하지 않습니다.</string>
+    <string name="offline_mode_enable_bt">켜기</string>
 </resources>

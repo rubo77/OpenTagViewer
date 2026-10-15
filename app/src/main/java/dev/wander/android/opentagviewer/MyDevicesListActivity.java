@@ -48,6 +48,7 @@ import dev.wander.android.opentagviewer.db.datastore.UserAuthDataStore;
 import dev.wander.android.opentagviewer.db.datastore.UserSettingsDataStore;
 import dev.wander.android.opentagviewer.db.repo.BeaconRepository;
 import dev.wander.android.opentagviewer.ui.importing.ExternalDeviceImporter;
+import dev.wander.android.opentagviewer.ui.login.OfflineBanner;
 import dev.wander.android.opentagviewer.ui.login.SignInAgain;
 import dev.wander.android.opentagviewer.python.icloud.ICloudFailures;
 import dev.wander.android.opentagviewer.python.icloud.AccountRefresher;
@@ -268,8 +269,7 @@ public class MyDevicesListActivity extends AppCompatActivity {
         this.binding.setHandleClickPageMenu(this::showPageMenu);
         this.showSelectionBar(false);
 
-        this.binding.offlineModeSignIn.setOnClickListener(
-                v -> this.startActivity(new Intent(this, AppleLoginActivity.class)));
+        this.offlineBannerLookup = OfflineBanner.watch(this, this.binding.offlineModeBanner.getRoot());
 
         RecyclerView recyclerView = findViewById(R.id.my_devices_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -303,7 +303,6 @@ public class MyDevicesListActivity extends AppCompatActivity {
         });
 
         this.rememberWhetherTheAccountIsLinked();
-        this.watchOfflineBanner();
         this.fetchDeviceInfoAndRender();
     }
 
@@ -904,29 +903,6 @@ public class MyDevicesListActivity extends AppCompatActivity {
                             Toast.makeText(this, R.string.refresh_from_account_failed,
                                     LENGTH_LONG).show();
                         });
-    }
-
-    /**
-     * Shows the offline banner while no Apple account is stored.
-     *
-     * <p>Reads the raw preference rather than {@code UserAuthRepository.getUserAuth}:
-     * presence of the record is the whole question, and decrypting it on every emission
-     * just to throw the body away would buy nothing. The flow stays subscribed rather than
-     * taking once, so signing in through the banner removes it on return without a restart.
-     * A read error is logged and leaves the banner hidden - showing it on a failure would
-     * claim a signed-in user is not.
-     */
-    private void watchOfflineBanner() {
-        this.offlineBannerLookup = UserAuthDataStore
-                .getInstance(this.getApplicationContext())
-                .data()
-                .map(prefs -> prefs.get(UserAuthDataStore.APPLE_ACCOUNT) != null)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        signedIn -> this.binding.offlineModeBanner.setVisibility(
-                                signedIn ? GONE : VISIBLE),
-                        error -> Log.e(TAG, "Could not read account presence", error));
     }
 
     private void rememberWhetherTheAccountIsLinked() {

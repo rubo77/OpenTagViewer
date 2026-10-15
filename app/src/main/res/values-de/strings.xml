@@ -463,4 +463,7 @@ Wenn Apple die Anfrage lediglich abgelehnt hat, lohnt es sich, zu warten und es 
     <string name="login_continue_offline">Ohne Anmeldung fortfahren</string>
     <string name="offline_mode_banner">Kein Apple-Konto – nur Bluetooth-Suche funktioniert. Anmelden, um Geräte aus der Ferne zu orten.</string>
     <string name="offline_mode_sign_in">Anmelden</string>
+    <string name="offline_mode_banner_no_bluetooth">Bluetooth ist aus – Geräte in der Nähe werden nicht gefunden.</string>
+    <string name="offline_mode_banner_nothing">Kein Apple-Konto und Bluetooth aus – hier funktioniert nichts.</string>
+    <string name="offline_mode_enable_bt">Aktivieren</string>
 </resources>

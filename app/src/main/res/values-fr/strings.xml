@@ -463,4 +463,7 @@ Si Apple a simplement refusé la requête, il vaut mieux attendre et réessayer.
     <string name="login_continue_offline">Continuer sans se connecter</string>
     <string name="offline_mode_banner">Aucun compte Apple — seule la recherche Bluetooth fonctionne. Connectez-vous pour localiser vos appareils à distance.</string>
     <string name="offline_mode_sign_in">Se connecter</string>
+    <string name="offline_mode_banner_no_bluetooth">Bluetooth désactivé — les appareils à proximité sont introuvables.</string>
+    <string name="offline_mode_banner_nothing">Aucun compte Apple et Bluetooth désactivé — rien ne fonctionne ici.</string>
+    <string name="offline_mode_enable_bt">Activer</string>
 </resources>

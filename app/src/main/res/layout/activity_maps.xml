@@ -49,7 +49,7 @@
         android:id="@+id/more_dropdown_top_right"
         android:layout_width="wrap_content"
         android:layout_height="60dp"
-        android:layout_alignParentTop="true"
+        android:layout_below="@id/offline_mode_banner"
         android:layout_alignParentRight="true"
         android:layout_marginTop="35dp"
         android:layout_marginRight="10dp"
@@ -83,7 +83,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
+        android:layout_below="@id/offline_mode_banner"
         android:layout_marginLeft="16dp"
         android:layout_marginTop="45dp"
         android:layout_toLeftOf="@id/more_dropdown_top_right"
@@ -159,6 +159,19 @@
             android:visibility="gone" />
 
     </LinearLayout>
+
+    <!--
+        While no account is stored the map can only show what was fetched before - this strip
+        says so. The dropdown and the fetch banner anchor below it, which collapses to the
+        same 35dp from the top while it is gone.
+    -->
+    <include
+        android:id="@+id/offline_mode_banner"
+        layout="@layout/inline_offline_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true" />
 
     <!--
         Last child, so it is drawn over everything: with the session in this state nothing on

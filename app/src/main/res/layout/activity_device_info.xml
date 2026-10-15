@@ -182,6 +182,10 @@
                 app:onClickMenu="@{handleClickMenu}"
                 app:pageTitle="@{pageTitle}" />
 
+            <include
+                android:id="@+id/offline_mode_banner"
+                layout="@layout/inline_offline_banner" />
+
             <!--
               **Padded at the bottom, and clipToPadding=false so it is scrolled into rather than
               wasted.** The last row here - Vendor Id, under Debug information - ended level with

@@ -40,37 +40,10 @@
             app:selectedCount="@{selectedCount}" />
 
         <!-- Shown while no Apple account is signed in: the nearby scanner works on
-             Bluetooth alone, everything that asks the Find My network does not. The
-             button re-opens the sign-in screen rather than a dialog, because signing in
-             is a journey, not a question. -->
-        <LinearLayout
+             Bluetooth alone, everything that asks the Find My network does not. -->
+        <include
             android:id="@+id/offline_mode_banner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <TextView
-                android:id="@+id/offline_mode_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/offline_mode_banner"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/offline_mode_sign_in"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/offline_mode_sign_in" />
-
-        </LinearLayout>
+            layout="@layout/inline_offline_banner" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/my_devices_list"

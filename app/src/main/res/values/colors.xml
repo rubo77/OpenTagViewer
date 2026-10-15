@@ -73,6 +73,11 @@
     <color name="md_theme_onTertiaryContainer_mediumContrast">#FFFFFF</color>
     <color name="md_theme_error_mediumContrast">#740006</color>
     <color name="md_theme_onError_mediumContrast">#FFFFFF</color>
+    <!-- Offline banner background: deliberately NOT the error token - the night
+         value of it is a light pink (a foreground colour), which painted the
+         strip pink with white text on it. The strip is meant to read as the
+         same dark red in both modes. -->
+    <color name="offline_banner_bg">#740006</color>
     <color name="md_theme_errorContainer_mediumContrast">#CF2C27</color>
     <color name="md_theme_onErrorContainer_mediumContrast">#FFFFFF</color>
     <color name="md_theme_background_mediumContrast">#F5FAFB</color>

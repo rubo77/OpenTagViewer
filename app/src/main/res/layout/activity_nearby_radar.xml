@@ -18,6 +18,12 @@
             app:onClickBack="@{handleClickBack}"
             app:pageTitle="@{@string/nearby_radar_title}" />
 
+        <!-- The radar is pure Bluetooth - with the radio off the strip is the only honest
+             thing this screen can show, so it sits directly under the toolbar. -->
+        <include
+            android:id="@+id/offline_mode_banner"
+            layout="@layout/inline_offline_banner" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -23,6 +23,7 @@ import dev.wander.android.opentagviewer.ble.NearbyDeviceScanner;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceSighting;
 import dev.wander.android.opentagviewer.databinding.ActivityNearbyRadarBinding;
 import dev.wander.android.opentagviewer.ui.compat.WindowPaddingUtil;
+import dev.wander.android.opentagviewer.ui.login.OfflineBanner;
 import dev.wander.android.opentagviewer.ui.nearbydevices.ForeignTagRename;
 import dev.wander.android.opentagviewer.util.nearby.ProximityDistance;
 import dev.wander.android.opentagviewer.util.nearby.RadarFeedback;
@@ -71,6 +72,8 @@ public class NearbyRadarActivity extends AppCompatActivity {
     private String keyPrefix;
     private Disposable scanSubscription;
     private Disposable scanRetrySubscription;
+    /** The account/Bluetooth watch feeding the banner; resumes and pauses with the screen. */
+    private Disposable offlineBannerWatch;
 
     /** True between a mid-session scan end and a resubscribe - the lost text reads it. */
     private boolean scanUnavailable;
@@ -152,6 +155,12 @@ public class NearbyRadarActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
+        if (this.binding == null) {
+            // onCreate already called finish() for a missing key prefix - nothing to watch.
+            return;
+        }
+        this.offlineBannerWatch = OfflineBanner.watch(this, this.binding.offlineModeBanner.getRoot());
+
         if (!BlePermissions.granted(this)) {
             this.showLost(R.string.nearby_devices_needs_permission);
             return;
@@ -168,6 +177,10 @@ public class NearbyRadarActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         this.handler.removeCallbacks(this.beep);
+        if (this.offlineBannerWatch != null) {
+            this.offlineBannerWatch.dispose();
+            this.offlineBannerWatch = null;
+        }
         if (this.scanSubscription != null) {
             this.scanSubscription.dispose();
             this.scanSubscription = null;

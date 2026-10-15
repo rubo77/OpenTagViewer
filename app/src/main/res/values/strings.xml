@@ -468,4 +468,6 @@ If Apple simply refused the request, waiting and trying again is worth doing fir
     <string name="nearby_device_with_owner">with its owner</string>
     <string name="nearby_devices_scan_unavailable">Bluetooth is off or unavailable. Turn it on to see nearby Find My devices — retrying automatically.</string>
     <string name="nearby_device_offline">offline</string>
+    <string name="nearby_radar_title">Radar</string>
+    <string name="nearby_radar_lost">Lost sight of it - walk around slowly</string>
 </resources>

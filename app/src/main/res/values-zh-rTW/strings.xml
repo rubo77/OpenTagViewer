@@ -433,4 +433,6 @@
     <string name="nearby_device_with_owner">在物主附近</string>
     <string name="nearby_devices_scan_unavailable">藍牙已關閉或無法使用。開啟後可查看附近的 Find My 裝置 — 將自動重試。</string>
     <string name="nearby_device_offline">離線</string>
+    <string name="nearby_radar_title">雷達</string>
+    <string name="nearby_radar_lost">失去訊號 - 請緩慢走動</string>
 </resources>

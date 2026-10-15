@@ -6,6 +6,7 @@ import static android.view.View.VISIBLE;
 
 import static dev.wander.android.opentagviewer.util.android.TextChangedWatcherFactory.justWatchOnChanged;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -236,9 +237,12 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         this.binding.nearbyDevicesEmptyText.setText(textRes);
     }
 
-    /** Reserved for the radar branch: clicking a row will open a pointing view for this key. */
+    /** A click opens the pointing view for this prefix - the radar branch's screen. */
     private void onDeviceClicked(final NearbyDeviceSighting sighting) {
-        Log.d(TAG, "Clicked nearby device " + sighting.getKeyPrefix());
+        final Intent intent = new Intent(this, NearbyRadarActivity.class);
+        intent.putExtra(NearbyRadarActivity.EXTRA_KEY_PREFIX, sighting.getKeyPrefix());
+        intent.putExtra(NearbyRadarActivity.EXTRA_MAC, sighting.getMac());
+        this.startActivity(intent);
     }
 
     private void onDeviceLongPressed(final View anchor, final NearbyDeviceSighting sighting) {

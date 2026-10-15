@@ -433,4 +433,6 @@ Si Apple a simplement refusé la requête, il vaut mieux attendre et réessayer.
     <string name="nearby_device_with_owner">avec son propriétaire</string>
     <string name="nearby_devices_scan_unavailable">Bluetooth désactivé ou indisponible. Activez-le pour voir les appareils Find My à proximité — nouvel essai automatique.</string>
     <string name="nearby_device_offline">hors ligne</string>
+    <string name="nearby_radar_title">Radar</string>
+    <string name="nearby_radar_lost">Perdu de vue - déplacez-vous lentement</string>
 </resources>

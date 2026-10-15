@@ -27,9 +27,11 @@ public class ForeignTagExportTest {
                 ForeignTagIdLog.Entry.class.getDeclaredConstructor(
                         long.class, long.class, int.class, String.class,
                         FindMyAdvertisement.BatteryLevel.class,
-                        FindMyAdvertisement.State.class, String.class);
+                        FindMyAdvertisement.State.class, String.class,
+                        Double.class, Double.class, Long.class, Long.class);
         ctor.setAccessible(true);
-        return ctor.newInstance(first, last, rssi, null, null, null, rotatedInto);
+        return ctor.newInstance(first, last, rssi, null, null, null, rotatedInto,
+                null, null, null, null);
     }
 
     @Test

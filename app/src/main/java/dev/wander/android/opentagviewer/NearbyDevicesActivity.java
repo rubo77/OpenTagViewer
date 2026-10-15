@@ -53,6 +53,9 @@ import dev.wander.android.opentagviewer.ui.compat.WindowPaddingUtil;
 import dev.wander.android.opentagviewer.ui.login.OfflineBanner;
 import dev.wander.android.opentagviewer.ui.nearbydevices.ForeignTagRename;
 import dev.wander.android.opentagviewer.ui.nearbydevices.NearbyDeviceListAdaptor;
+import dev.wander.android.opentagviewer.util.android.CachedPhoneLocation;
+import dev.wander.android.opentagviewer.util.android.FusedPhoneLocation;
+import dev.wander.android.opentagviewer.util.android.PhoneLocation;
 import dev.wander.android.opentagviewer.util.nearby.ForeignTagExport;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
@@ -93,6 +96,7 @@ public class NearbyDevicesActivity extends AppCompatActivity {
     private final NearbyDeviceBook book = new NearbyDeviceBook();
     private ForeignTagNames names;
     private ForeignTagIdLog idLog;
+    private PhoneLocation phoneLocation;
 
     /**
      * Prefixes the user already answered "different device" for, this session.
@@ -157,6 +161,8 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         this.idLog = ForeignTagIdLog.get(this);
         this.derivedAddresses =
                 new DerivedAddressStore(this.getApplicationContext().getFilesDir());
+        this.phoneLocation = new CachedPhoneLocation(
+                new FusedPhoneLocation(this.getApplicationContext()));
 
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_nearby_devices);
         WindowPaddingUtil.insetForSystemBars(this.binding.getRoot());
@@ -276,7 +282,7 @@ public class NearbyDevicesActivity extends AppCompatActivity {
                 // File IO belongs on the scan thread, not after observeOn: a flushed write on
                 // the main thread would hitch the list every few seconds.
                 .doOnNext(s -> {
-                    this.idLog.hear(s);
+                    this.idLog.hear(s, this.phoneLocation.lastKnown());
                     // The merge belongs in the hear-path, not in the visible rows: a
                     // rotation the screen never sees (background service, or a frame
                     // swallowed between ticks) still has to carry the name over.

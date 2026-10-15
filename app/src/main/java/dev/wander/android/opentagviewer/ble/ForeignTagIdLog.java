@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import dev.wander.android.opentagviewer.util.android.PhoneLocation;
 import lombok.Getter;
 import android.util.Log;
 
@@ -91,11 +92,29 @@ public final class ForeignTagIdLog {
         @Nullable
         private String rotatedInto;
 
+        /**
+         * Where the phone stood at the freshest hearing that had a fix, and when. A position
+         * is all four fields or none - a hearing without a fix writes nothing and leaves an
+         * older position standing as the last known one.
+         */
+        @Nullable
+        private Double lastLatitude;
+        @Nullable
+        private Double lastLongitude;
+        @Nullable
+        private Long lastAccuracyMetres;
+        @Nullable
+        private Long lastPositionMs;
+
         Entry(final long firstSeenMs, final long lastSeenMs, final int lastRssi,
               @Nullable final String lastMac,
               @Nullable final FindMyAdvertisement.BatteryLevel lastBatteryLevel,
               @Nullable final FindMyAdvertisement.State lastState,
-              @Nullable final String rotatedInto) {
+              @Nullable final String rotatedInto,
+              @Nullable final Double lastLatitude,
+              @Nullable final Double lastLongitude,
+              @Nullable final Long lastAccuracyMetres,
+              @Nullable final Long lastPositionMs) {
             this.firstSeenMs = firstSeenMs;
             this.lastSeenMs = lastSeenMs;
             this.lastRssi = lastRssi;
@@ -103,6 +122,15 @@ public final class ForeignTagIdLog {
             this.lastBatteryLevel = lastBatteryLevel;
             this.lastState = lastState;
             this.rotatedInto = rotatedInto;
+            this.lastLatitude = lastLatitude;
+            this.lastLongitude = lastLongitude;
+            this.lastAccuracyMetres = lastAccuracyMetres;
+            this.lastPositionMs = lastPositionMs;
+        }
+
+        /** Whether a stamped position is on record - the map draws named tags that have one. */
+        public boolean hasPosition() {
+            return this.lastLatitude != null && this.lastLongitude != null;
         }
 
         /**
@@ -154,11 +182,27 @@ public final class ForeignTagIdLog {
      * the freshest RSSI. Flushes when {@link #FLUSH_EVERY_MS} has passed since the last write.
      */
     public synchronized void hear(final NearbyDeviceSighting sighting) {
+        this.hear(sighting, null);
+    }
+
+    /**
+     * Records a sighting with the phone's position at that moment.
+     *
+     * <p>A null {@code fix} is an ordinary call, not a failure - location off or ungranted -
+     * and must not erase the position an earlier hearing stamped: the last <i>known</i> place
+     * stays the last known place.
+     */
+    public synchronized void hear(final NearbyDeviceSighting sighting,
+                                  @Nullable final PhoneLocation.Fix fix) {
         final Entry entry = this.entries.get(sighting.getKeyPrefix());
         if (entry == null) {
             this.entries.put(sighting.getKeyPrefix(), new Entry(
                     sighting.getSeenAtMs(), sighting.getSeenAtMs(), sighting.getRssi(),
-                    sighting.getMac(), sighting.getBatteryLevel(), sighting.getState(), null));
+                    sighting.getMac(), sighting.getBatteryLevel(), sighting.getState(), null,
+                    fix != null ? fix.getLatitude() : null,
+                    fix != null ? fix.getLongitude() : null,
+                    fix != null ? fix.getAccuracyMetres() : null,
+                    fix != null ? sighting.getSeenAtMs() : null));
             this.evictOldestPastLimit();
         } else if (sighting.getSeenAtMs() >= entry.getLastSeenMs()) {
             entry.lastSeenMs = sighting.getSeenAtMs();
@@ -166,6 +210,12 @@ public final class ForeignTagIdLog {
             entry.lastMac = sighting.getMac();
             entry.lastBatteryLevel = sighting.getBatteryLevel();
             entry.lastState = sighting.getState();
+            if (fix != null) {
+                entry.lastLatitude = fix.getLatitude();
+                entry.lastLongitude = fix.getLongitude();
+                entry.lastAccuracyMetres = fix.getAccuracyMetres();
+                entry.lastPositionMs = sighting.getSeenAtMs();
+            }
         }
         this.dirty = true;
 
@@ -220,11 +270,24 @@ public final class ForeignTagIdLog {
         }
     }
 
-    /** Marks {@code oldPrefix} as retired in favour of {@code newPrefix}. */
+    /**
+     * Marks {@code oldPrefix} as retired in favour of {@code newPrefix}.
+     *
+     * <p>The successor inherits the last known position when it has none of its own: it is the
+     * same physical tag, so the place it last stood is the right place to draw it until a
+     * hearing with a fix supersedes it.
+     */
     public synchronized void markRotated(final String oldPrefix, final String newPrefix) {
         final Entry entry = this.entries.get(oldPrefix);
         if (entry != null) {
             entry.rotatedInto = newPrefix;
+            final Entry successor = this.entries.get(newPrefix);
+            if (successor != null && !successor.hasPosition()) {
+                successor.lastLatitude = entry.lastLatitude;
+                successor.lastLongitude = entry.lastLongitude;
+                successor.lastAccuracyMetres = entry.lastAccuracyMetres;
+                successor.lastPositionMs = entry.lastPositionMs;
+            }
             this.dirty = true;
         }
     }
@@ -252,6 +315,17 @@ public final class ForeignTagIdLog {
                 }
                 if (e.getValue().getRotatedInto() != null) {
                     o.put("rotatedInto", e.getValue().getRotatedInto());
+                }
+                if (e.getValue().getLastLatitude() != null
+                        && e.getValue().getLastLongitude() != null) {
+                    o.put("lat", e.getValue().getLastLatitude());
+                    o.put("lon", e.getValue().getLastLongitude());
+                    if (e.getValue().getLastAccuracyMetres() != null) {
+                        o.put("acc", e.getValue().getLastAccuracyMetres());
+                    }
+                    if (e.getValue().getLastPositionMs() != null) {
+                        o.put("posMs", e.getValue().getLastPositionMs());
+                    }
                 }
                 root.put(e.getKey(), o);
             }
@@ -291,7 +365,11 @@ public final class ForeignTagIdLog {
                         o.has("mac") ? o.getString("mac") : null,
                         enumField(o, "battery", FindMyAdvertisement.BatteryLevel.class, prefix),
                         enumField(o, "state", FindMyAdvertisement.State.class, prefix),
-                        o.has("rotatedInto") ? o.getString("rotatedInto") : null));
+                        o.has("rotatedInto") ? o.getString("rotatedInto") : null,
+                        o.has("lat") ? o.getDouble("lat") : null,
+                        o.has("lon") ? o.getDouble("lon") : null,
+                        o.has("acc") ? o.getLong("acc") : null,
+                        o.has("posMs") ? o.getLong("posMs") : null));
             }
         } catch (final IOException | JSONException unreadable) {
             // A corrupt log is worth less than nothing: starting empty loses history, trusting

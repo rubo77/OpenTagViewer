@@ -63,6 +63,25 @@ public final class MarkerPalette {
         return resolve(context, com.google.android.material.R.attr.colorOnSurfaceVariant);
     }
 
+    /**
+     * The pin body for a named foreign Find My device - a tag this app never imported.
+     *
+     * <p>Secondary container rather than the card-matching background on purpose: a pin that
+     * looks exactly like an own-tag pin would imply the marker is backed by an imported tag
+     * and its Apple reports, when the position underneath is only where the phone last heard
+     * it over Bluetooth.
+     */
+    @ColorInt
+    public static int foreignFill(@NonNull final Context context) {
+        return resolve(context, com.google.android.material.R.attr.colorSecondaryContainer);
+    }
+
+    /** The icon drawn on a foreign device's pin; paired with {@link #foreignFill}. */
+    @ColorInt
+    public static int foreignIcon(@NonNull final Context context) {
+        return resolve(context, com.google.android.material.R.attr.colorOnSecondaryContainer);
+    }
+
     @ColorInt
     private static int resolve(@NonNull final Context context, final int attribute) {
         final TypedValue found = new TypedValue();

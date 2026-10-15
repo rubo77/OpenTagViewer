@@ -9,6 +9,7 @@ import org.junit.rules.TemporaryFolder;
 
 import dev.wander.android.opentagviewer.ble.FindMyAdvertisement.BatteryLevel;
 import dev.wander.android.opentagviewer.ble.FindMyAdvertisement.State;
+import dev.wander.android.opentagviewer.util.android.PhoneLocation;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -69,6 +70,65 @@ public class ForeignTagIdLogTest {
         assertNull(rebuilt.getMac());
         assertNull(rebuilt.getBatteryLevel());
         assertNull(rebuilt.getState());
+    }
+
+    @Test
+    public void reloadsTheStampedPosition() {
+        final ForeignTagIdLog writer = new ForeignTagIdLog(this.filesDir.getRoot());
+        writer.hear(sighting("aabbccddeeff"), new PhoneLocation.Fix(52.52, 13.405, 18));
+        writer.flush();
+
+        final ForeignTagIdLog reader = new ForeignTagIdLog(this.filesDir.getRoot());
+        final ForeignTagIdLog.Entry entry = reader.entry("aabbccddeeff");
+
+        assertEquals(Boolean.TRUE, entry.hasPosition());
+        assertEquals(Double.valueOf(52.52), entry.getLastLatitude());
+        assertEquals(Double.valueOf(13.405), entry.getLastLongitude());
+        assertEquals(Long.valueOf(18), entry.getLastAccuracyMetres());
+        assertEquals(Long.valueOf(1_000), entry.getLastPositionMs());
+    }
+
+    @Test
+    public void aHearingWithoutFixKeepsTheLastKnownPosition() {
+        final ForeignTagIdLog log = new ForeignTagIdLog(this.filesDir.getRoot());
+        log.hear(sighting("aabbccddeeff"), new PhoneLocation.Fix(52.52, 13.405, 18));
+        log.hear(NearbyDeviceSighting.builder()
+                .mac("AA:BB:CC:DD:EE:FF")
+                .keyPrefix("aabbccddeeff")
+                .rssi(-70)
+                .seenAtMs(2_000)
+                .build());
+
+        assertEquals(Double.valueOf(52.52),
+                log.entry("aabbccddeeff").getLastLatitude());
+        assertEquals(Long.valueOf(1_000),
+                log.entry("aabbccddeeff").getLastPositionMs());
+    }
+
+    @Test
+    public void rotationHandsThePositionToTheSuccessor() {
+        final ForeignTagIdLog log = new ForeignTagIdLog(this.filesDir.getRoot());
+        log.hear(sighting("aabbccddeeff"), new PhoneLocation.Fix(52.52, 13.405, 18));
+        log.hear(sighting("ffee00112233"));
+
+        log.markRotated("aabbccddeeff", "ffee00112233");
+
+        final ForeignTagIdLog.Entry successor = log.entry("ffee00112233");
+        assertEquals(Double.valueOf(52.52), successor.getLastLatitude());
+        assertEquals(Long.valueOf(1_000), successor.getLastPositionMs());
+        assertEquals("ffee00112233", log.entry("aabbccddeeff").getRotatedInto());
+    }
+
+    @Test
+    public void rotationKeepsASuccessorsOwnPosition() {
+        final ForeignTagIdLog log = new ForeignTagIdLog(this.filesDir.getRoot());
+        log.hear(sighting("aabbccddeeff"), new PhoneLocation.Fix(52.52, 13.405, 18));
+        log.hear(sighting("ffee00112233"), new PhoneLocation.Fix(48.14, 11.58, 30));
+
+        log.markRotated("aabbccddeeff", "ffee00112233");
+
+        assertEquals(Double.valueOf(48.14),
+                log.entry("ffee00112233").getLastLatitude());
     }
 
     @Test

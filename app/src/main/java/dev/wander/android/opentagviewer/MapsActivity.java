@@ -81,7 +81,10 @@ import dev.wander.android.opentagviewer.ui.error.ErrorReportActivity;
 import dev.wander.android.opentagviewer.db.room.entity.OwnedBeacon;
 import java.util.Locale;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -142,6 +145,8 @@ import dev.wander.android.opentagviewer.util.rx.AccountReadPolicy;
 import dev.wander.android.opentagviewer.util.rx.RefreshPolicy;
 import dev.wander.android.opentagviewer.util.rx.RxFlows;
 import dev.wander.android.opentagviewer.ble.BlePermissions;
+import dev.wander.android.opentagviewer.ble.ForeignTagIdLog;
+import dev.wander.android.opentagviewer.ble.ForeignTagNames;
 import dev.wander.android.opentagviewer.ble.BleSoundTriggerPhase;
 import dev.wander.android.opentagviewer.ble.BleSoundTriggerStatus;
 import dev.wander.android.opentagviewer.ble.BleSoundTriggerUpdate;
@@ -2466,7 +2471,77 @@ public class MapsActivity extends AppCompatActivity implements IMapProvider.OnMa
 
             this.showBeaconOnMap(beacon, maybeLast.get());
         }
+        this.showForeignDevicesOnMap();
         this.updateBeaconCards();
+    }
+
+    /** Marker ids for foreign devices carry this prefix so they cannot collide with a beaconId. */
+    private static final String FOREIGN_MARKER_PREFIX = "foreign:";
+
+    /**
+     * Draws every named foreign Find My device at the position the phone last heard it.
+     *
+     * <p>Only named prefixes qualify, and only ones with a stamped position: an unnamed pin
+     * would be a hex key on the map, and a name without a place is exactly the empty promise
+     * this method exists to avoid. Retired prefixes ({@code rotatedInto}) are skipped - the
+     * name and the position live on the successor now, and drawing both would show one device
+     * twice. Markers for names that were deleted or identities that rotated away are removed
+     * rather than left to linger.
+     */
+    private void showForeignDevicesOnMap() {
+        if (this.mapProvider == null) {
+            return;
+        }
+
+        final Map<String, String> named = new ForeignTagNames(this).all();
+        final Map<String, ForeignTagIdLog.Entry> logged = ForeignTagIdLog.get(this).entries();
+        final Set<String> wanted = new HashSet<>();
+
+        for (final Map.Entry<String, String> namedTag : named.entrySet()) {
+            final ForeignTagIdLog.Entry record = logged.get(namedTag.getKey());
+            if (record == null || record.getRotatedInto() != null || !record.hasPosition()) {
+                continue;
+            }
+            final String markerKey = FOREIGN_MARKER_PREFIX + namedTag.getKey();
+            wanted.add(markerKey);
+
+            if (this.currentMarkers.containsKey(markerKey)) {
+                this.mapProvider.removeMarker(markerKey);
+            }
+            final Bitmap icon = VectorImageGeneratorUtil.makeMarker(
+                    getResources(), R.drawable.devices_24px,
+                    MarkerPalette.foreignFill(this), MarkerPalette.foreignIcon(this));
+            final MapMarker marker = MapMarker.builder()
+                    .id(markerKey)
+                    .latitude(record.getLastLatitude())
+                    .longitude(record.getLastLongitude())
+                    .icon(icon)
+                    .title(namedTag.getValue())
+                    // The age of the position the pin sits at, not of the last hearing - a
+                    // hearing without a fix is newer than the ground under this marker.
+                    .snippet(getString(R.string.last_seen) + " "
+                            + DateUtils.getRelativeTimeSpanString(record.getLastPositionMs()))
+                    // Same reason the beacon marker carries it: every refresh removes and
+                    // re-adds, so a focused pin has to be rebuilt raised.
+                    .zIndex(this.markerFocus.zIndexFor(markerKey))
+                    .build();
+            this.currentMarkers.put(markerKey, this.mapProvider.addMarker(marker));
+
+            if (this.currentMarkers.size() == 1) {
+                // The only pin on the map: for somebody with no imported tags this is the
+                // whole reason the screen is open, so the camera goes to it.
+                this.mapProvider.animateCamera(record.getLastLatitude(),
+                        record.getLastLongitude(), this.initialZoom(), null);
+            }
+        }
+
+        for (final Iterator<String> it = this.currentMarkers.keySet().iterator(); it.hasNext(); ) {
+            final String key = it.next();
+            if (key.startsWith(FOREIGN_MARKER_PREFIX) && !wanted.contains(key)) {
+                this.mapProvider.removeMarker(key);
+                it.remove();
+            }
+        }
     }
 
     private synchronized void showBeaconOnMap(final BeaconInformation beacon, final BeaconLocationReport lastLocation) {
@@ -3167,7 +3242,11 @@ public class MapsActivity extends AppCompatActivity implements IMapProvider.OnMa
             // tapping the one visible marker in a pile scrolls to its card but leaves the
             // marker underneath whichever one is drawn on top - so the tap looks ignored.
             this.markerFocus.focus(beaconIdForMarker.get());
-            this.tagListSwiperHelper.navigateToCard(beaconIdForMarker.get());
+            // A foreign pin has no card underneath - raising it is all a tap can mean, and the
+            // details it offers are already on the pin itself.
+            if (!beaconIdForMarker.get().startsWith(FOREIGN_MARKER_PREFIX)) {
+                this.tagListSwiperHelper.navigateToCard(beaconIdForMarker.get());
+            }
         } else {
             Log.w(TAG, "Clicked on a marker that could not be associated back to any beaconId!");
         }

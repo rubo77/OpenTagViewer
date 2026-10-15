@@ -18,6 +18,54 @@
             app:onClickBack="@{handleClickBack}"
             app:pageTitle="@{@string/nearby_devices_title}" />
 
+        <!-- Long-press marks rows instead of renaming: the bar counts the selection and
+             offers rename (single row only) and delete for the marked prefixes. Hidden
+             until the first row is marked. -->
+        <LinearLayout
+            android:id="@+id/nearby_selection_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSecondaryContainer"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/nearby_selection_count"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="?attr/colorOnSecondaryContainer"
+                android:textSize="14sp"
+                tools:text="2 selected" />
+
+            <Button
+                android:id="@+id/nearby_selection_rename"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/nearby_action_rename" />
+
+            <Button
+                android:id="@+id/nearby_selection_delete"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/nearby_action_delete" />
+
+            <ImageButton
+                android:id="@+id/nearby_selection_close"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cancel"
+                android:src="@drawable/close_24px"
+                app:tint="?attr/colorOnSecondaryContainer" />
+
+        </LinearLayout>
+
         <!-- The opt-in for presence alerts: keeps watching named devices in the background
              and notifies when they arrive or leave. Off by default - it is a recording the
              user chooses, not a display. -->

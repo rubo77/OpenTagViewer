@@ -213,6 +213,13 @@ public final class ForeignTagIdLog {
         return new HashMap<>(this.entries);
     }
 
+    /** Forgets a prefix entirely - the last-seen record and any rotation link it carries. */
+    public synchronized void remove(final String keyPrefix) {
+        if (this.entries.remove(keyPrefix) != null) {
+            this.dirty = true;
+        }
+    }
+
     /** Marks {@code oldPrefix} as retired in favour of {@code newPrefix}. */
     public synchronized void markRotated(final String oldPrefix, final String newPrefix) {
         final Entry entry = this.entries.get(oldPrefix);

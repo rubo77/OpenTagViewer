@@ -456,4 +456,8 @@ Wenn Apple die Anfrage lediglich abgelehnt hat, lohnt es sich, zu warten und es 
     <string name="nearby_filter_unnamed">Unbenannte</string>
     <string name="nearby_export">Sichtungen teilen</string>
     <string name="nearby_filter_online">Online</string>
+    <string name="nearby_selected_count">%1$d ausgewählt</string>
+    <string name="nearby_action_rename">Umbenennen</string>
+    <string name="nearby_action_delete">Löschen</string>
+    <string name="nearby_delete_confirm">%1$d ausgewählte Geräte löschen? Gespeicherte Namen und der Sichtungsverlauf gehen verloren.</string>
 </resources>

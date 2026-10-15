@@ -456,4 +456,8 @@ If Apple simply refused the request, waiting and trying again is worth doing fir
     <string name="nearby_filter_unnamed">Unnamed</string>
     <string name="nearby_export">Share sightings</string>
     <string name="nearby_filter_online">Online</string>
+    <string name="nearby_selected_count">%1$d selected</string>
+    <string name="nearby_action_rename">Rename</string>
+    <string name="nearby_action_delete">Delete</string>
+    <string name="nearby_delete_confirm">Delete %1$d selected device(s)? Saved names and sighting history will be lost.</string>
 </resources>

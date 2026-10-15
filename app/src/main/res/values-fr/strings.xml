@@ -456,4 +456,8 @@ Si Apple a simplement refusé la requête, il vaut mieux attendre et réessayer.
     <string name="nearby_filter_unnamed">Non nommés</string>
     <string name="nearby_export">Partager les détections</string>
     <string name="nearby_filter_online">En ligne</string>
+    <string name="nearby_selected_count">%1$d sélectionné(s)</string>
+    <string name="nearby_action_rename">Renommer</string>
+    <string name="nearby_action_delete">Supprimer</string>
+    <string name="nearby_delete_confirm">Supprimer les %1$d appareils sélectionnés ? Les noms enregistrés et l’historique des observations seront perdus.</string>
 </resources>

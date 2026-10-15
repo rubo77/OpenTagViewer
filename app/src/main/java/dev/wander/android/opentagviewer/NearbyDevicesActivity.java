@@ -3,7 +3,6 @@ package dev.wander.android.opentagviewer;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
-import static dev.wander.android.opentagviewer.util.android.TextChangedWatcherFactory.justWatchOnChanged;
 
 import android.Manifest;
 import android.content.Intent;
@@ -18,6 +17,7 @@ import android.widget.Toast;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -34,7 +34,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -113,6 +112,15 @@ public class NearbyDevicesActivity extends AppCompatActivity {
     private Disposable refreshSubscription;
 
     /**
+     * Prefixes marked by long-press. The set being non-empty IS the selection mode - when the
+     * last mark comes off, the bar and the check icons disappear on their own.
+     */
+    private final Set<String> selectedPrefixes = new HashSet<>();
+
+    /** Back ends selection mode instead of the screen; enabled only while it has rows. */
+    private OnBackPressedCallback selectionBackCallback;
+
+    /**
      * The pending resubscribe after the scan ended mid-session - Bluetooth toggled off or a
      * failed scan both arrive as a quiet {@code onComplete}, so without this the screen keeps
      * claiming "nothing in range" forever while showing a radio nobody listens on.
@@ -175,6 +183,18 @@ public class NearbyDevicesActivity extends AppCompatActivity {
                 (group, checkedIds) -> this.onFilterChanged(
                         checkedIds.isEmpty() ? -1 : checkedIds.get(0)));
         this.binding.nearbyExportButton.setOnClickListener(v -> this.shareLog());
+
+        this.binding.nearbySelectionRename.setOnClickListener(v -> this.renameSelected());
+        this.binding.nearbySelectionDelete.setOnClickListener(v -> this.confirmDeleteSelected());
+        this.binding.nearbySelectionClose.setOnClickListener(v -> this.clearSelection());
+
+        this.selectionBackCallback = new OnBackPressedCallback(false) {
+            @Override
+            public void handleOnBackPressed() {
+                NearbyDevicesActivity.this.clearSelection();
+            }
+        };
+        this.getOnBackPressedDispatcher().addCallback(this, this.selectionBackCallback);
     }
 
     @Override
@@ -310,6 +330,18 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         });
         this.addUnheardNamedRows(rows, nowMs);
         final List<NearbyDeviceSighting> filtered = this.filterRows(rows, nowMs);
+
+        // A mark on a row that left the list - rotated away, filtered out, evicted - would
+        // keep counting towards a delete the user cannot see. Drop it from the selection.
+        if (!this.selectedPrefixes.isEmpty()) {
+            final Set<String> visible = new HashSet<>();
+            for (final NearbyDeviceSighting s : filtered) {
+                visible.add(s.getKeyPrefix());
+            }
+            if (this.selectedPrefixes.retainAll(visible)) {
+                this.updateSelectionUi();
+            }
+        }
 
         if (filtered.isEmpty()) {
             this.showEmptyState(this.scanUnavailable
@@ -609,16 +641,88 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         this.binding.nearbyDevicesEmptyText.setText(textRes);
     }
 
-    /** A click opens the pointing view for this prefix - the radar branch's screen. */
+    /**
+     * A click opens the pointing view for this prefix - the radar branch's screen. While the
+     * selection bar is up a click marks instead, matching the long-press that opened it.
+     */
     private void onDeviceClicked(final NearbyDeviceSighting sighting) {
+        if (!this.selectedPrefixes.isEmpty()) {
+            this.toggleSelection(sighting);
+            return;
+        }
         final Intent intent = new Intent(this, NearbyRadarActivity.class);
         intent.putExtra(NearbyRadarActivity.EXTRA_KEY_PREFIX, sighting.getKeyPrefix());
         intent.putExtra(NearbyRadarActivity.EXTRA_MAC, sighting.getMac());
         this.startActivity(intent);
     }
 
+    /** A long-press marks the row; renaming moved onto the selection bar it opens. */
     private void onDeviceLongPressed(final View anchor, final NearbyDeviceSighting sighting) {
-        this.showRenameDialog(sighting.getKeyPrefix());
+        this.toggleSelection(sighting);
+    }
+
+    private void toggleSelection(final NearbyDeviceSighting sighting) {
+        final String prefix = sighting.getKeyPrefix();
+        if (!this.selectedPrefixes.remove(prefix)) {
+            this.selectedPrefixes.add(prefix);
+        }
+        this.updateSelectionUi();
+    }
+
+    private void updateSelectionUi() {
+        final int count = this.selectedPrefixes.size();
+        this.binding.nearbySelectionBar.setVisibility(count > 0 ? VISIBLE : GONE);
+        if (count > 0) {
+            this.binding.nearbySelectionCount.setText(
+                    getString(R.string.nearby_selected_count, count));
+            this.binding.nearbySelectionRename.setEnabled(count == 1);
+        }
+        this.selectionBackCallback.setEnabled(count > 0);
+        this.adaptor.setSelectedPrefixes(this.selectedPrefixes);
+        this.adaptor.notifyDataSetChanged();
+    }
+
+    private void clearSelection() {
+        if (this.selectedPrefixes.isEmpty()) {
+            return;
+        }
+        this.selectedPrefixes.clear();
+        this.updateSelectionUi();
+    }
+
+    /** The bar's rename acts on the single marked row - it is disabled otherwise. */
+    private void renameSelected() {
+        if (this.selectedPrefixes.size() != 1) {
+            return;
+        }
+        this.showRenameDialog(this.selectedPrefixes.iterator().next());
+    }
+
+    /**
+     * Deleting forgets the device outright: its name, its sighting-log entry and the row in
+     * the book. A prefix still in earshot comes back on its next advertisement - that is a
+     * new sighting, not the deleted record, which the confirm dialog says.
+     */
+    private void confirmDeleteSelected() {
+        if (this.selectedPrefixes.isEmpty()) {
+            return;
+        }
+        new MaterialAlertDialogBuilder(this)
+                .setMessage(getString(
+                        R.string.nearby_delete_confirm, this.selectedPrefixes.size()))
+                .setPositiveButton(R.string.nearby_action_delete, (d, which) -> {
+                    for (final String prefix : this.selectedPrefixes) {
+                        this.book.remove(prefix);
+                        this.names.rename(prefix, null);
+                        this.idLog.remove(prefix);
+                    }
+                    this.idLog.flush();
+                    this.selectedPrefixes.clear();
+                    this.updateSelectionUi();
+                    this.rebuildList();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     /** The shared foreign-tag name dialog, wired so the list redraws the renamed row. */

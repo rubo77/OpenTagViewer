@@ -80,6 +80,14 @@ public final class NearbyDeviceBook {
         return nowMs - sighting.getSeenAtMs() > GONE_AFTER_MS;
     }
 
+    /**
+     * Drops the row for a prefix. A device still in earshot reappears on its next
+     * advertisement - removal forgets what was seen, it cannot silence the tag.
+     */
+    public void remove(final String keyPrefix) {
+        this.latestByPrefix.remove(keyPrefix);
+    }
+
     /** The newest sighting for one prefix, or null. */
     @Nullable
     public NearbyDeviceSighting latest(final String keyPrefix) {

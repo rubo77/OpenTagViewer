@@ -456,4 +456,8 @@ Als Apple het verzoek simpelweg weigerde, is even wachten en opnieuw proberen he
     <string name="nearby_filter_unnamed">Naamloos</string>
     <string name="nearby_export">Waarnemingen delen</string>
     <string name="nearby_filter_online">Online</string>
+    <string name="nearby_selected_count">%1$d geselecteerd</string>
+    <string name="nearby_action_rename">Hernoemen</string>
+    <string name="nearby_action_delete">Verwijderen</string>
+    <string name="nearby_delete_confirm">%1$d geselecteerde apparaten verwijderen? Opgeslagen namen en waarnemingsgeschiedenis gaan verloren.</string>
 </resources>

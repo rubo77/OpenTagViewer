@@ -105,4 +105,21 @@ public class NearbyDeviceBookTest {
         assertEquals("111111111111", rows.get(0).getKeyPrefix());
         assertEquals("aabbccddeeff", rows.get(1).getKeyPrefix());
     }
+
+    @Test
+    public void removeForgetsTheRowUntilItIsHeardAgain() {
+        final NearbyDeviceBook book = new NearbyDeviceBook();
+        book.hear(sighting("aabbccddeeff", -60, 1_000));
+        book.hear(sighting("111111111111", -50, 1_000));
+
+        book.remove("aabbccddeeff");
+
+        final List<NearbyDeviceSighting> rows = book.snapshot(1_000);
+        assertEquals(1, rows.size());
+        assertEquals("111111111111", rows.get(0).getKeyPrefix());
+
+        // A still-advertising tag re-adds itself: deletion is forgetting, not muting.
+        book.hear(sighting("aabbccddeeff", -70, 2_000));
+        assertEquals(2, book.snapshot(2_000).size());
+    }
 }

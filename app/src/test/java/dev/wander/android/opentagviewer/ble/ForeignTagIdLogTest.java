@@ -70,4 +70,19 @@ public class ForeignTagIdLogTest {
         assertNull(rebuilt.getBatteryLevel());
         assertNull(rebuilt.getState());
     }
+
+    @Test
+    public void removeDropsTheEntryAndPersistsTheDeletion() {
+        final ForeignTagIdLog writer = new ForeignTagIdLog(this.filesDir.getRoot());
+        writer.hear(sighting("aabbccddeeff"));
+        writer.hear(sighting("111111111111"));
+
+        writer.remove("aabbccddeeff");
+        writer.flush();
+
+        final ForeignTagIdLog reader = new ForeignTagIdLog(this.filesDir.getRoot());
+        assertNull(reader.entry("aabbccddeeff"));
+        assertEquals(1, reader.entries().size());
+        assertEquals("111111111111", reader.entries().keySet().iterator().next());
+    }
 }

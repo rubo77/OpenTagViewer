@@ -57,5 +57,19 @@
                 tools:text="AA:BB:CC:DD:EE:FF" />
 
         </LinearLayout>
+
+        <!-- Marks the row while the selection bar is up: filled for marked, outline
+             otherwise; hidden entirely in plain browsing. -->
+        <ImageView
+            android:id="@+id/nearby_item_check"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="12dp"
+            android:contentDescription="@null"
+            android:src="@drawable/check_circle_24px"
+            android:visibility="gone"
+            app:tint="?attr/colorOutline"
+            tools:visibility="visible" />
     </LinearLayout>
 </FrameLayout>

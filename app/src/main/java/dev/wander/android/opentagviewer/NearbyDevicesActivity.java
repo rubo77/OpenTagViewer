@@ -1,6 +1,5 @@
 package dev.wander.android.opentagviewer;
 
-import static android.view.View.inflate;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
@@ -14,10 +13,8 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.textfield.TextInputEditText;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.databinding.DataBindingUtil;
@@ -25,7 +22,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import dev.wander.android.opentagviewer.ble.BlePermissions;
@@ -35,6 +33,7 @@ import dev.wander.android.opentagviewer.ble.NearbyDeviceScanner;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceSighting;
 import dev.wander.android.opentagviewer.databinding.ActivityNearbyDevicesBinding;
 import dev.wander.android.opentagviewer.ui.compat.WindowPaddingUtil;
+import dev.wander.android.opentagviewer.ui.nearbydevices.ForeignTagRename;
 import dev.wander.android.opentagviewer.ui.nearbydevices.NearbyDeviceListAdaptor;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
@@ -246,34 +245,11 @@ public class NearbyDevicesActivity extends AppCompatActivity {
     }
 
     private void onDeviceLongPressed(final View anchor, final NearbyDeviceSighting sighting) {
-        this.showRenameDialog(sighting);
+        this.showRenameDialog(sighting.getKeyPrefix());
     }
 
-    /**
-     * The same name dialog the tag page uses, pointed at a prefix instead of a naming record:
-     * a name for a foreign tag lives only in this app, on the only identity it broadcasts.
-     */
-    private void showRenameDialog(final NearbyDeviceSighting sighting) {
-        final View view = inflate(this, R.layout.edit_device_name_dialog, null);
-        final TextInputEditText textInput = view.findViewById(R.id.device_name_input);
-        final String existing = this.names.nameFor(sighting.getKeyPrefix());
-        if (existing != null) {
-            textInput.setText(existing);
-        }
-
-        final AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.device_name)
-                .setIcon(R.drawable.edit_24px)
-                .setView(view)
-                .setPositiveButton(R.string.confirm, (d, which) -> {
-                    this.names.rename(sighting.getKeyPrefix(),
-                            Objects.requireNonNull(textInput.getText()).toString());
-                    this.rebuildList();
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
-
-        // No empty-field guard here, unlike the tag page's copy: a foreign tag has no upstream
-        // name to overwrite, so a blank field is the only "unnamed" there is - confirm clears.
+    /** The shared foreign-tag name dialog, wired so the list redraws the renamed row. */
+    private void showRenameDialog(final String keyPrefix) {
+        ForeignTagRename.showDialog(this, this.names, keyPrefix, this::rebuildList);
     }
 }

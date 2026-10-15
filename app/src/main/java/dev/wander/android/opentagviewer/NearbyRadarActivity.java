@@ -23,6 +23,7 @@ import dev.wander.android.opentagviewer.ble.NearbyDeviceScanner;
 import dev.wander.android.opentagviewer.ble.NearbyDeviceSighting;
 import dev.wander.android.opentagviewer.databinding.ActivityNearbyRadarBinding;
 import dev.wander.android.opentagviewer.ui.compat.WindowPaddingUtil;
+import dev.wander.android.opentagviewer.ui.nearbydevices.ForeignTagRename;
 import dev.wander.android.opentagviewer.util.nearby.ProximityDistance;
 import dev.wander.android.opentagviewer.util.nearby.RadarFeedback;
 import dev.wander.android.opentagviewer.util.nearby.RssiSmoother;
@@ -127,6 +128,9 @@ public class NearbyRadarActivity extends AppCompatActivity {
 
         this.showDeviceHeading();
         this.setupSmoothingSlider();
+        this.binding.nearbyRadarRename.setOnClickListener(v ->
+                ForeignTagRename.showDialog(this, this.names, this.keyPrefix,
+                        this::showDeviceHeading));
     }
 
     /** The averaging-window slider; the label restates the window so the number has a unit. */

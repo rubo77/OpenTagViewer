@@ -26,14 +26,32 @@
             android:paddingHorizontal="24dp"
             android:paddingTop="8dp">
 
-            <TextView
-                android:id="@+id/nearby_radar_device_name"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/nunito_bold"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="18sp"
-                tools:text="Find My device · a1b2" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/nearby_radar_device_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/nunito_bold"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="18sp"
+                    tools:text="Find My device · a1b2" />
+
+                <ImageButton
+                    android:id="@+id/nearby_radar_rename"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/nearby_action_rename"
+                    android:src="@drawable/edit_24px"
+                    app:tint="?attr/colorOnSurfaceVariant" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/nearby_radar_mac"

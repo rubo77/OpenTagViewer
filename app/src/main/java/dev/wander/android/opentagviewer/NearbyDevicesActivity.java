@@ -21,6 +21,8 @@ import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -239,8 +241,9 @@ public class NearbyDevicesActivity extends AppCompatActivity {
     }
 
     private void rebuildList() {
-        final List<NearbyDeviceSighting> rows =
-                this.book.snapshot(System.currentTimeMillis());
+        final long nowMs = System.currentTimeMillis();
+        final List<NearbyDeviceSighting> rows = this.book.snapshot(nowMs);
+        this.addUnheardNamedRows(rows, nowMs);
 
         if (rows.isEmpty()) {
             this.showEmptyState(this.scanUnavailable
@@ -255,6 +258,53 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         this.adaptor.notifyDataSetChanged();
 
         this.maybeOfferRotation(rows);
+    }
+
+    /**
+     * Appends a row for every named prefix the book has no current row for.
+     *
+     * <p>Naming a tag is a promise to keep listing it: the row is rebuilt from the sighting
+     * log's last hearing (or bare prefix if the tag was named before the log recorded one)
+     * and lands in the offline tail, which is then re-sorted by last-heard so reconstructed
+     * rows interleave with the book's own gone rows instead of always trailing them.
+     */
+    private void addUnheardNamedRows(
+            final List<NearbyDeviceSighting> rows, final long nowMs) {
+        final Set<String> shown = new HashSet<>();
+        int firstGone = rows.size();
+        for (int i = 0; i < rows.size(); i++) {
+            shown.add(rows.get(i).getKeyPrefix());
+            if (i < firstGone && NearbyDeviceBook.isGone(rows.get(i), nowMs)) {
+                firstGone = i;
+            }
+        }
+
+        final List<NearbyDeviceSighting> unheard = new ArrayList<>();
+        for (final Map.Entry<String, String> named : this.names.all().entrySet()) {
+            final String prefix = named.getKey();
+            if (shown.contains(prefix)) {
+                continue;
+            }
+            final ForeignTagIdLog.Entry record = this.idLog.entry(prefix);
+            if (record == null) {
+                // Named but never recorded - e.g. the log was cleared or hit its cap. List it
+                // anyway: a name with no hearing is still a name. Zero timestamp marks it.
+                unheard.add(NearbyDeviceSighting.builder()
+                        .keyPrefix(prefix)
+                        .seenAtMs(0)
+                        .build());
+            } else if (record.getRotatedInto() == null) {
+                // A rotated-away prefix stays hidden: its name already moved to the
+                // successor, and listing both would show one tag twice.
+                unheard.add(record.toSighting(prefix));
+            }
+        }
+        if (unheard.isEmpty()) {
+            return;
+        }
+        rows.addAll(unheard);
+        rows.subList(firstGone, rows.size())
+                .sort(Comparator.comparingLong(NearbyDeviceSighting::getSeenAtMs).reversed());
     }
 
     /**

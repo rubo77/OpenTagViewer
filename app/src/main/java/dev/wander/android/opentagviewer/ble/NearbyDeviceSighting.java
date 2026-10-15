@@ -27,7 +27,8 @@ import lombok.Getter;
 @Builder
 public final class NearbyDeviceSighting {
 
-    /** The BLE address the frame arrived on. Not an identity - see the class doc. */
+    /** The BLE address the frame arrived on. Not an identity - see the class doc. Null when the row was rebuilt from the sighting log rather than a live frame. */
+    @Nullable
     private final String mac;
 
     /** Six-byte advertisement-key prefix as lowercase hex; the join key for both frame shapes. */
@@ -46,6 +47,8 @@ public final class NearbyDeviceSighting {
     /** Signal strength in dBm. Negative; closer to zero is nearer. */
     private final int rssi;
 
+    /** Null when the row was rebuilt from a log record that predates the field. */
+    @Nullable
     private final FindMyAdvertisement.BatteryLevel batteryLevel;
 
     /** The raw status byte, kept for the same reason {@link NearbyTagSighting} keeps it. */
@@ -54,7 +57,8 @@ public final class NearbyDeviceSighting {
     /** The separated frame's hint byte; 0 on a nearby frame. */
     private final int hint;
 
-    /** Whether the tag said it was separated from its owner. */
+    /** Whether the tag said it was separated from its owner. Null like {@link #batteryLevel}. */
+    @Nullable
     private final FindMyAdvertisement.State state;
 
     /** Wall-clock time of the sighting, for ageing rows on the list. */

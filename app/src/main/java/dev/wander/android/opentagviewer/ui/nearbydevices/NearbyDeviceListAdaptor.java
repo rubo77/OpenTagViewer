@@ -115,14 +115,21 @@ public class NearbyDeviceListAdaptor
             // owner-state, then how stale the newest hearing is.
             parts.add(this.resources.getString(R.string.nearby_device_distance_format,
                     ProximityDistance.describe(sighting.getRssi())));
-            parts.add(this.resources.getString(batteryString(sighting.getBatteryLevel())));
-            parts.add(this.resources.getString(sighting.getState() == FindMyAdvertisement.State.SEPARATED
-                    ? R.string.nearby_device_separated
-                    : R.string.nearby_device_with_owner));
+            if (sighting.getBatteryLevel() != null) {
+                parts.add(this.resources.getString(batteryString(sighting.getBatteryLevel())));
+            }
+            if (sighting.getState() != null) {
+                parts.add(this.resources.getString(
+                        sighting.getState() == FindMyAdvertisement.State.SEPARATED
+                                ? R.string.nearby_device_separated
+                                : R.string.nearby_device_with_owner));
+            }
         }
-        parts.add(DateUtils.getRelativeTimeSpanString(
-                sighting.getSeenAtMs(), System.currentTimeMillis(),
-                DateUtils.SECOND_IN_MILLIS).toString());
+        if (sighting.getSeenAtMs() > 0) {
+            parts.add(DateUtils.getRelativeTimeSpanString(
+                    sighting.getSeenAtMs(), System.currentTimeMillis(),
+                    DateUtils.SECOND_IN_MILLIS).toString());
+        }
         holder.getDetails().setText(String.join(" · ", parts));
 
         holder.getMac().setText(sighting.getMac());

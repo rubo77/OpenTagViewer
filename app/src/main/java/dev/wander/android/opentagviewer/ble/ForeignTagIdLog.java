@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import lombok.Getter;
+import android.util.Log;
 
 /**
  * What each foreign key prefix was heard doing, kept across app restarts.
@@ -59,12 +60,24 @@ public final class ForeignTagIdLog {
     private long lastFlushMs = 0L;
     private boolean dirty = false;
 
-    /** One prefix's record: first and last hearing, the freshest RSSI, and where it rotated to. */
+    /** One prefix's record: first and last hearing, the freshest radio facts, and where it rotated to. */
     @Getter
     public static final class Entry {
         private final long firstSeenMs;
         private long lastSeenMs;
         private int lastRssi;
+
+        /**
+         * The last frame's facts, kept so a named device can be listed while unheard: the
+         * list rebuilds an honest "what we last saw" row from these rather than inventing
+         * values. Null on records written before the fields existed.
+         */
+        @Nullable
+        private String lastMac;
+        @Nullable
+        private FindMyAdvertisement.BatteryLevel lastBatteryLevel;
+        @Nullable
+        private FindMyAdvertisement.State lastState;
 
         /**
          * The prefix this identity was confirmed to have rotated into, or null.
@@ -77,11 +90,33 @@ public final class ForeignTagIdLog {
         private String rotatedInto;
 
         Entry(final long firstSeenMs, final long lastSeenMs, final int lastRssi,
+              @Nullable final String lastMac,
+              @Nullable final FindMyAdvertisement.BatteryLevel lastBatteryLevel,
+              @Nullable final FindMyAdvertisement.State lastState,
               @Nullable final String rotatedInto) {
             this.firstSeenMs = firstSeenMs;
             this.lastSeenMs = lastSeenMs;
             this.lastRssi = lastRssi;
+            this.lastMac = lastMac;
+            this.lastBatteryLevel = lastBatteryLevel;
+            this.lastState = lastState;
             this.rotatedInto = rotatedInto;
+        }
+
+        /**
+         * The last hearing under {@code keyPrefix}, rebuilt as a sighting: real values where
+         * the log kept them, null where it did not. The row this feeds renders offline, so
+         * nothing here claims to be current.
+         */
+        public NearbyDeviceSighting toSighting(final String keyPrefix) {
+            return NearbyDeviceSighting.builder()
+                    .keyPrefix(keyPrefix)
+                    .mac(this.lastMac)
+                    .rssi(this.lastRssi)
+                    .batteryLevel(this.lastBatteryLevel)
+                    .state(this.lastState)
+                    .seenAtMs(this.lastSeenMs)
+                    .build();
         }
     }
 
@@ -98,11 +133,15 @@ public final class ForeignTagIdLog {
         final Entry entry = this.entries.get(sighting.getKeyPrefix());
         if (entry == null) {
             this.entries.put(sighting.getKeyPrefix(), new Entry(
-                    sighting.getSeenAtMs(), sighting.getSeenAtMs(), sighting.getRssi(), null));
+                    sighting.getSeenAtMs(), sighting.getSeenAtMs(), sighting.getRssi(),
+                    sighting.getMac(), sighting.getBatteryLevel(), sighting.getState(), null));
             this.evictOldestPastLimit();
         } else if (sighting.getSeenAtMs() >= entry.getLastSeenMs()) {
             entry.lastSeenMs = sighting.getSeenAtMs();
             entry.lastRssi = sighting.getRssi();
+            entry.lastMac = sighting.getMac();
+            entry.lastBatteryLevel = sighting.getBatteryLevel();
+            entry.lastState = sighting.getState();
         }
         this.dirty = true;
 
@@ -171,6 +210,15 @@ public final class ForeignTagIdLog {
                 o.put("first", e.getValue().getFirstSeenMs());
                 o.put("last", e.getValue().getLastSeenMs());
                 o.put("rssi", e.getValue().getLastRssi());
+                if (e.getValue().getLastMac() != null) {
+                    o.put("mac", e.getValue().getLastMac());
+                }
+                if (e.getValue().getLastBatteryLevel() != null) {
+                    o.put("battery", e.getValue().getLastBatteryLevel().name());
+                }
+                if (e.getValue().getLastState() != null) {
+                    o.put("state", e.getValue().getLastState().name());
+                }
                 if (e.getValue().getRotatedInto() != null) {
                     o.put("rotatedInto", e.getValue().getRotatedInto());
                 }
@@ -189,7 +237,7 @@ public final class ForeignTagIdLog {
         } catch (final IOException | JSONException cannotPersist) {
             // The log is a convenience: a failed write loses history, not correctness - the
             // in-memory map still serves this session, and the next flush retries.
-            android.util.Log.w("ForeignTagIdLog", "Could not persist the sighting log",
+            Log.w("ForeignTagIdLog", "Could not persist the sighting log",
                     cannotPersist);
         }
     }
@@ -209,13 +257,37 @@ public final class ForeignTagIdLog {
                         o.getLong("first"),
                         o.getLong("last"),
                         o.optInt("rssi", 0),
+                        o.has("mac") ? o.getString("mac") : null,
+                        enumField(o, "battery", FindMyAdvertisement.BatteryLevel.class, prefix),
+                        enumField(o, "state", FindMyAdvertisement.State.class, prefix),
                         o.has("rotatedInto") ? o.getString("rotatedInto") : null));
             }
         } catch (final IOException | JSONException unreadable) {
             // A corrupt log is worth less than nothing: starting empty loses history, trusting
             // it would poison the merge suggestions with entries that were never seen.
-            android.util.Log.w("ForeignTagIdLog", "Ignoring an unreadable sighting log",
+            Log.w("ForeignTagIdLog", "Ignoring an unreadable sighting log",
                     unreadable);
+        }
+    }
+
+    /**
+     * Reads an enum field stored by name, tolerating names no enum knows. A value that cannot
+     * parse is reported, then treated as unrecorded - the same state records written before
+     * the field existed are already in - rather than discarding the whole entry over one key.
+     */
+    @Nullable
+    private static <E extends Enum<E>> E enumField(
+            final JSONObject o, final String key, final Class<E> type, final String prefix) {
+        if (!o.has(key)) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(type, o.getString(key));
+        } catch (final IllegalArgumentException | JSONException unknownName) {
+            Log.w("ForeignTagIdLog",
+                    "Ignoring unparseable " + key + " in the record for " + prefix,
+                    unknownName);
+            return null;
         }
     }
 

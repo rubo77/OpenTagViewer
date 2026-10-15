@@ -438,7 +438,7 @@
     <string name="nearby_radar_rssi_format">%1$d dBm</string>
     <string name="nearby_radar_smoothing_format">平均化：%1$d 秒</string>
     <string name="nearby_radar_smoothing_label_a11y">平均化視窗（秒）</string>
-    <string name="nearby_rotation_suggestion">這可能是更換了新金鑰的「%1$s」</string>
+    <string name="nearby_rotation_suggestion">新裝置 %2$s 可能是以新金鑰廣播的「%1$s」</string>
     <string name="nearby_rotation_confirm">同一裝置</string>
     <string name="nearby_rotation_dismiss">不同裝置</string>
     <string name="nearby_rotation_migrated">已在新金鑰下識別出「%1$s」</string>

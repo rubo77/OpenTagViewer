@@ -438,7 +438,7 @@ Si Apple a simplement refusé la requête, il vaut mieux attendre et réessayer.
     <string name="nearby_radar_rssi_format">%1$d dBm</string>
     <string name="nearby_radar_smoothing_format">Moyennage : %1$d s</string>
     <string name="nearby_radar_smoothing_label_a11y">Fenêtre de moyennage en secondes</string>
-    <string name="nearby_rotation_suggestion">Il pourrait s’agir de « %1$s » avec une nouvelle clé</string>
+    <string name="nearby_rotation_suggestion">Le nouvel appareil %2$s pourrait être « %1$s » diffusant une nouvelle clé</string>
     <string name="nearby_rotation_confirm">Même appareil</string>
     <string name="nearby_rotation_dismiss">Autre appareil</string>
     <string name="nearby_rotation_migrated">« %1$s » reconnu avec sa nouvelle clé</string>

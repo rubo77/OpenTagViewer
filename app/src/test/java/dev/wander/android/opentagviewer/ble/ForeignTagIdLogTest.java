@@ -1,7 +1,9 @@
 package dev.wander.android.opentagviewer.ble;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -144,5 +146,21 @@ public class ForeignTagIdLogTest {
         assertNull(reader.entry("aabbccddeeff"));
         assertEquals(1, reader.entries().size());
         assertEquals("111111111111", reader.entries().keySet().iterator().next());
+    }
+
+    @Test
+    public void remembersARejectedPairAcrossRestarts() {
+        final ForeignTagIdLog writer = new ForeignTagIdLog(this.filesDir.getRoot());
+        writer.hear(sighting("aabbccddeeff"));
+        writer.hear(sighting("111111111111"));
+
+        writer.rejectRotation("111111111111", "aabbccddeeff");
+        writer.flush();
+
+        final ForeignTagIdLog reader = new ForeignTagIdLog(this.filesDir.getRoot());
+        assertTrue(reader.entry("111111111111").hasRejectedPredecessor("aabbccddeeff"));
+        // The rejection binds the pair, not the prefix: another departed name may still ask.
+        assertFalse(reader.entry("111111111111").hasRejectedPredecessor("222222222222"));
+        assertFalse(reader.entry("aabbccddeeff").hasRejectedPredecessor("111111111111"));
     }
 }

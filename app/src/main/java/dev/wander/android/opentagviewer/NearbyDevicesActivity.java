@@ -98,14 +98,6 @@ public class NearbyDevicesActivity extends AppCompatActivity {
     private ForeignTagIdLog idLog;
     private PhoneLocation phoneLocation;
 
-    /**
-     * Prefixes the user already answered "different device" for, this session.
-     *
-     * <p>Session-only on purpose: persisting a rejection would freeze the answer even after
-     * the tag really did rotate again, while the cost of re-asking next launch is one banner.
-     */
-    private final Set<String> dismissedSuggestions = new HashSet<>();
-
     /** The pair currently offered in the banner, or null while none is shown. */
     private String suggestedOldPrefix;
     private String suggestedNewPrefix;
@@ -372,7 +364,7 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         this.adaptor.setRows(filtered);
         this.adaptor.notifyDataSetChanged();
 
-        this.maybeOfferRotation(filtered);
+        this.maybeOfferRotation();
     }
 
     /**
@@ -429,8 +421,10 @@ public class NearbyDevicesActivity extends AppCompatActivity {
      * named prefix to go quiet, and quiet is a thing time decides, not a new advertisement.
      * Shows the closest match - smallest gap between the named prefix's last hearing and the
      * unnamed one's first - because several departed names and several new faces can overlap.
+     * Candidates come from the sighting log rather than the visible rows, so a device that
+     * arrived and went quiet while the screen was closed is still asked about.
      */
-    private void maybeOfferRotation(final List<NearbyDeviceSighting> rows) {
+    private void maybeOfferRotation() {
         if (this.suggestedNewPrefix != null) {
             if (this.names.nameFor(this.suggestedNewPrefix) != null) {
                 // The hear-path merge answered the question while it was still on
@@ -446,13 +440,15 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         String bestOld = null;
         String bestNew = null;
 
-        for (final NearbyDeviceSighting row : rows) {
-            final String newPrefix = row.getKeyPrefix();
-            if (names.containsKey(newPrefix) || this.dismissedSuggestions.contains(newPrefix)) {
+        for (final Map.Entry<String, ForeignTagIdLog.Entry> candidate
+                : this.idLog.entries().entrySet()) {
+            final String newPrefix = candidate.getKey();
+            if (names.containsKey(newPrefix)) {
                 continue;
             }
-            final ForeignTagIdLog.Entry newEntry = this.idLog.entry(newPrefix);
-            if (newEntry == null) {
+            final ForeignTagIdLog.Entry newEntry = candidate.getValue();
+            if (newEntry.getRotatedInto() != null) {
+                // A retired identity is dead, not a candidate face.
                 continue;
             }
 
@@ -461,11 +457,18 @@ public class NearbyDevicesActivity extends AppCompatActivity {
                 final String oldPrefix = old.getKey();
                 if (newPrefix.equals(oldPrefix)
                         || old.getValue().getRotatedInto() != null
-                        || !names.containsKey(oldPrefix)) {
+                        || !names.containsKey(oldPrefix)
+                        || newEntry.hasRejectedPredecessor(oldPrefix)) {
                     continue;
                 }
-                if (!NearbyRotationHeuristic.couldBeRotation(
-                        old.getValue().getLastSeenMs(), newEntry.getFirstSeenMs(), now)) {
+                if (!NearbyRotationHeuristic.couldBeLooseRotation(
+                        old.getValue().getLastSeenMs(), old.getValue().getLastRssi(),
+                        newEntry.getFirstSeenMs(), newEntry.getLastRssi(), now)) {
+                    continue;
+                }
+                if (!NearbyRotationHeuristic.samePlace(
+                        old.getValue().getLastLatitude(), old.getValue().getLastLongitude(),
+                        newEntry.getLastLatitude(), newEntry.getLastLongitude())) {
                     continue;
                 }
                 final long gap = newEntry.getFirstSeenMs() - old.getValue().getLastSeenMs();
@@ -480,8 +483,14 @@ public class NearbyDevicesActivity extends AppCompatActivity {
         if (bestNew != null) {
             this.suggestedOldPrefix = bestOld;
             this.suggestedNewPrefix = bestNew;
+            final ForeignTagIdLog.Entry candidate = this.idLog.entry(bestNew);
+            final String newDevice = candidate != null
+                    && candidate.getLastMac() != null
+                    ? candidate.getLastMac()
+                    : bestNew.substring(0, 8) + "…";
             this.binding.nearbyRotationText.setText(
-                    getString(R.string.nearby_rotation_suggestion, names.get(bestOld)));
+                    getString(R.string.nearby_rotation_suggestion,
+                            names.get(bestOld), newDevice));
             this.binding.nearbyRotationBanner.setVisibility(VISIBLE);
         }
     }
@@ -497,8 +506,9 @@ public class NearbyDevicesActivity extends AppCompatActivity {
     }
 
     private void onRotationDismissed() {
-        if (this.suggestedNewPrefix != null) {
-            this.dismissedSuggestions.add(this.suggestedNewPrefix);
+        if (this.suggestedNewPrefix != null && this.suggestedOldPrefix != null) {
+            this.idLog.rejectRotation(this.suggestedNewPrefix, this.suggestedOldPrefix);
+            this.idLog.flush();
         }
         this.hideRotationBanner();
     }

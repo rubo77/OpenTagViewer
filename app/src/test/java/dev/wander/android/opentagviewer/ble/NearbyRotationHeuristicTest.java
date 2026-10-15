@@ -68,4 +68,48 @@ public class NearbyRotationHeuristicTest {
         assertFalse(NearbyRotationHeuristic.isConfidentRotation(
                 0L, -60, 5_000L, -40, 25_000L));
     }
+
+    @Test
+    public void suggestionTierAcceptsAHoursLongGap() {
+        // The duty-cycled phone: silent for two hours, then back at a similar strength.
+        // The merge tier would never ask about this; the suggestion tier exists for it.
+        assertTrue(NearbyRotationHeuristic.couldBeLooseRotation(
+                0L, -40, 2 * 3_600_000L, -46, 2 * 3_600_000L + 60_000L));
+    }
+
+    @Test
+    public void suggestionTierRefusesBeyondItsWindow() {
+        assertFalse(NearbyRotationHeuristic.couldBeLooseRotation(
+                0L, -40, NearbyRotationHeuristic.SUGGEST_GAP_MS + 1, -42,
+                NearbyRotationHeuristic.SUGGEST_GAP_MS + 60_000L));
+    }
+
+    @Test
+    public void suggestionTierRefusesWhileTheOldPrefixStillSpeaks() {
+        assertFalse(NearbyRotationHeuristic.couldBeLooseRotation(
+                0L, -40, 5_000L, -42, 10_000L));
+    }
+
+    @Test
+    public void suggestionTierRefusesASignalTooFarOff() {
+        // Two hours apart AND 25dB stronger - somebody walked in.
+        assertFalse(NearbyRotationHeuristic.couldBeLooseRotation(
+                0L, -80, 30_000L, -55, 3_600_000L));
+    }
+
+    @Test
+    public void samePlaceTreatsAMissingFixAsNoEvidence() {
+        assertTrue(NearbyRotationHeuristic.samePlace(52.5, 13.4, null, null));
+        assertTrue(NearbyRotationHeuristic.samePlace(null, null, 52.5, 13.4));
+    }
+
+    @Test
+    public void samePlaceAcceptsTwoReadingsOfOneSpot() {
+        assertTrue(NearbyRotationHeuristic.samePlace(52.5000, 13.4000, 52.5005, 13.4004));
+    }
+
+    @Test
+    public void samePlaceRefusesACandidateHeardKilometresAway() {
+        assertFalse(NearbyRotationHeuristic.samePlace(52.5000, 13.4000, 52.5200, 13.4300));
+    }
 }

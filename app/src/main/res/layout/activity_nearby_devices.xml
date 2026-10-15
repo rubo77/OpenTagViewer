@@ -175,8 +175,8 @@
         </LinearLayout>
 
         <!-- Offered while a named tag seems to have rotated its key: confirm moves the name
-             onto the new prefix, dismiss silences the question for this session. Hidden
-             unless the rotation heuristic has a candidate. -->
+             onto the new prefix, dismiss records the pair as rejected so it is never asked
+             again. Hidden unless the rotation heuristic has a candidate. -->
         <LinearLayout
             android:id="@+id/nearby_rotation_banner"
             android:layout_width="match_parent"
@@ -197,19 +197,28 @@
                 android:textSize="14sp"
                 tools:text="This might be “Keys” broadcasting a new key" />
 
-            <Button
-                android:id="@+id/nearby_rotation_confirm"
-                style="@style/Widget.Material3.Button.TextButton"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/nearby_rotation_confirm" />
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
 
-            <Button
-                android:id="@+id/nearby_rotation_dismiss"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/nearby_rotation_dismiss" />
+                <Button
+                    android:id="@+id/nearby_rotation_confirm"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/nearby_rotation_confirm" />
+
+                <Button
+                    android:id="@+id/nearby_rotation_dismiss"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/nearby_rotation_dismiss" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

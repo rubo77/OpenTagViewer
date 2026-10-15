@@ -438,7 +438,7 @@
     <string name="nearby_radar_rssi_format">%1$d дБм</string>
     <string name="nearby_radar_smoothing_format">Усреднение: %1$d с</string>
     <string name="nearby_radar_smoothing_label_a11y">Окно усреднения в секундах</string>
-    <string name="nearby_rotation_suggestion">Возможно, это «%1$s» с новым ключом</string>
+    <string name="nearby_rotation_suggestion">Новое устройство %2$s может быть «%1$s» с новым ключом</string>
     <string name="nearby_rotation_confirm">То же устройство</string>
     <string name="nearby_rotation_dismiss">Другое устройство</string>
     <string name="nearby_rotation_migrated">«%1$s» распознан с новым ключом</string>

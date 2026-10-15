@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -14,8 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import dev.wander.android.opentagviewer.util.android.PhoneLocation;
 import lombok.Getter;
@@ -106,6 +109,13 @@ public final class ForeignTagIdLog {
         @Nullable
         private Long lastPositionMs;
 
+        /**
+         * Predecessors the user already said "different device" to. Kept on the successor
+         * record so a rejected pair is never asked again, while the same prefix may still be
+         * suggested against a different departed name.
+         */
+        private final Set<String> rejectedPredecessors = new HashSet<>();
+
         Entry(final long firstSeenMs, final long lastSeenMs, final int lastRssi,
               @Nullable final String lastMac,
               @Nullable final FindMyAdvertisement.BatteryLevel lastBatteryLevel,
@@ -131,6 +141,11 @@ public final class ForeignTagIdLog {
         /** Whether a stamped position is on record - the map draws named tags that have one. */
         public boolean hasPosition() {
             return this.lastLatitude != null && this.lastLongitude != null;
+        }
+
+        /** Whether {@code oldPrefix} was already offered as this entry's predecessor and refused. */
+        public boolean hasRejectedPredecessor(final String oldPrefix) {
+            return this.rejectedPredecessors.contains(oldPrefix);
         }
 
         /**
@@ -292,6 +307,18 @@ public final class ForeignTagIdLog {
         }
     }
 
+    /**
+     * Remembers that {@code newPrefix} is not {@code oldPrefix} continued - the user's
+     * "different device" answer. The pair is never suggested again; the same new prefix may
+     * still be asked about another departed name.
+     */
+    public synchronized void rejectRotation(final String newPrefix, final String oldPrefix) {
+        final Entry entry = this.entries.get(newPrefix);
+        if (entry != null && entry.rejectedPredecessors.add(oldPrefix)) {
+            this.dirty = true;
+        }
+    }
+
     /** Writes pending changes now, e.g. while a screen pauses. */
     public synchronized void flush() {
         if (!this.dirty) {
@@ -315,6 +342,9 @@ public final class ForeignTagIdLog {
                 }
                 if (e.getValue().getRotatedInto() != null) {
                     o.put("rotatedInto", e.getValue().getRotatedInto());
+                }
+                if (!e.getValue().getRejectedPredecessors().isEmpty()) {
+                    o.put("rejected", new JSONArray(e.getValue().getRejectedPredecessors()));
                 }
                 if (e.getValue().getLastLatitude() != null
                         && e.getValue().getLastLongitude() != null) {
@@ -370,6 +400,13 @@ public final class ForeignTagIdLog {
                         o.has("lon") ? o.getDouble("lon") : null,
                         o.has("acc") ? o.getLong("acc") : null,
                         o.has("posMs") ? o.getLong("posMs") : null));
+                final Entry loaded = this.entries.get(prefix);
+                final JSONArray rejected = o.optJSONArray("rejected");
+                if (loaded != null && rejected != null) {
+                    for (int i = 0; i < rejected.length(); i++) {
+                        loaded.getRejectedPredecessors().add(rejected.getString(i));
+                    }
+                }
             }
         } catch (final IOException | JSONException unreadable) {
             // A corrupt log is worth less than nothing: starting empty loses history, trusting

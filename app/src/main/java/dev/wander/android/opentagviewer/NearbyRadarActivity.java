@@ -25,6 +25,7 @@ import dev.wander.android.opentagviewer.databinding.ActivityNearbyRadarBinding;
 import dev.wander.android.opentagviewer.ui.compat.WindowPaddingUtil;
 import dev.wander.android.opentagviewer.util.nearby.ProximityDistance;
 import dev.wander.android.opentagviewer.util.nearby.RadarFeedback;
+import dev.wander.android.opentagviewer.util.nearby.RssiSmoother;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -55,7 +56,12 @@ public class NearbyRadarActivity extends AppCompatActivity {
     /** Resubscribe interval after the scan ended mid-session; mirrors the list screen. */
     private static final long SCAN_RETRY_DELAY_MS = TimeUnit.SECONDS.toMillis(30);
 
+    /** Default smoothing window: long enough to catch a handful of frames, short enough to
+     *  still move while somebody walks. The slider overrides it live. */
+    private static final long DEFAULT_SMOOTH_MS = 4_000;
+
     private final NearbyDeviceScanner scanner = new NearbyDeviceScanner();
+    private final RssiSmoother smoother = new RssiSmoother(DEFAULT_SMOOTH_MS);
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     private ActivityNearbyRadarBinding binding;
@@ -120,6 +126,22 @@ public class NearbyRadarActivity extends AppCompatActivity {
         }
 
         this.showDeviceHeading();
+        this.setupSmoothingSlider();
+    }
+
+    /** The averaging-window slider; the label restates the window so the number has a unit. */
+    private void setupSmoothingSlider() {
+        this.updateSmoothingLabel((float) DEFAULT_SMOOTH_MS / 1000f);
+        this.binding.nearbyRadarSmoothing.addOnChangeListener(
+                (slider, value, fromUser) -> {
+                    this.smoother.setWindowMs((long) (value * 1000));
+                    this.updateSmoothingLabel(value);
+                });
+    }
+
+    private void updateSmoothingLabel(final float seconds) {
+        this.binding.nearbyRadarSmoothingLabel.setText(
+                getString(R.string.nearby_radar_smoothing_format, (int) Math.round(seconds)));
     }
 
     @Override
@@ -162,13 +184,26 @@ public class NearbyRadarActivity extends AppCompatActivity {
             return;
         }
 
-        this.latestMeters = ProximityDistance.estimateMeters(sighting.getRssi());
+        // The smoothed value drives everything: a raw frame's RSSI swings ±10-15 dB on
+        // multipath, which through the log-distance model is a factor of 2-3 in metres -
+        // that jitter is what made the unsmoothed readout useless for actual hunting.
+        this.smoother.add(sighting.getRssi(), sighting.getSeenAtMs());
+        final double smoothedRssi = this.smoother.median();
+        if (Double.isNaN(smoothedRssi)) {
+            return;
+        }
+
+        this.latestMeters = ProximityDistance.estimateMeters((int) Math.round(smoothedRssi));
         this.lastHeardMs = sighting.getSeenAtMs();
 
         this.binding.nearbyRadarDistance.setText(
                 getString(R.string.nearby_device_distance_format,
-                        ProximityDistance.describe(sighting.getRssi())));
-        this.binding.nearbyRadarStatus.setText("");
+                        ProximityDistance.describe((int) Math.round(smoothedRssi))));
+        // The raw reading stays visible next to the smoothed one: the median hides jitter,
+        // and jitter is information - a wildly swinging raw value says "walls and pockets",
+        // a steady one says the estimate can be trusted.
+        this.binding.nearbyRadarStatus.setText(
+                getString(R.string.nearby_radar_rssi_format, sighting.getRssi()));
         this.binding.nearbyRadarView.updateDevice((float) this.latestMeters, true);
     }
 

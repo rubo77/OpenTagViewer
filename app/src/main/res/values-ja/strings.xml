@@ -435,4 +435,7 @@ Appleが要求を拒否しただけなら、少し待ってからもう一度お
     <string name="nearby_device_offline">オフライン</string>
     <string name="nearby_radar_title">レーダー</string>
     <string name="nearby_radar_lost">見失いました - ゆっくり歩き回ってください</string>
+    <string name="nearby_radar_rssi_format">%1$d dBm</string>
+    <string name="nearby_radar_smoothing_format">平均化: %1$d 秒</string>
+    <string name="nearby_radar_smoothing_label_a11y">平均化ウィンドウ（秒）</string>
 </resources>

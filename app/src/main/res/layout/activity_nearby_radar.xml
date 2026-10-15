@@ -71,5 +71,37 @@
             android:layout_margin="24dp"
             android:layout_weight="1" />
 
+        <!-- How far back the median reaches, 0-10s. Zero is raw readings - offered because
+             the user owns the tradeoff between a calm display and a fast one. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="24dp"
+            android:paddingBottom="16dp">
+
+            <TextView
+                android:id="@+id/nearby_radar_smoothing_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="13sp"
+                tools:text="Mittelung: 4 s" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/nearby_radar_smoothing"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:contentDescription="@string/nearby_radar_smoothing_label_a11y"
+                android:stepSize="0.5"
+                android:value="4"
+                android:valueFrom="0"
+                android:valueTo="10" />
+
+        </LinearLayout>
+
     </LinearLayout>
 </layout>

@@ -435,4 +435,7 @@
     <string name="nearby_device_offline">離線</string>
     <string name="nearby_radar_title">雷達</string>
     <string name="nearby_radar_lost">失去訊號 - 請緩慢走動</string>
+    <string name="nearby_radar_rssi_format">%1$d dBm</string>
+    <string name="nearby_radar_smoothing_format">平均化：%1$d 秒</string>
+    <string name="nearby_radar_smoothing_label_a11y">平均化視窗（秒）</string>
 </resources>

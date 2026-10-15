@@ -435,4 +435,7 @@
     <string name="nearby_device_offline">не в сети</string>
     <string name="nearby_radar_title">Радар</string>
     <string name="nearby_radar_lost">Сигнал потерян - двигайтесь медленно</string>
+    <string name="nearby_radar_rssi_format">%1$d дБм</string>
+    <string name="nearby_radar_smoothing_format">Усреднение: %1$d с</string>
+    <string name="nearby_radar_smoothing_label_a11y">Окно усреднения в секундах</string>
 </resources>

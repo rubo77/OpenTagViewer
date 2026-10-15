@@ -435,4 +435,7 @@ Si Apple a simplement refusé la requête, il vaut mieux attendre et réessayer.
     <string name="nearby_device_offline">hors ligne</string>
     <string name="nearby_radar_title">Radar</string>
     <string name="nearby_radar_lost">Perdu de vue - déplacez-vous lentement</string>
+    <string name="nearby_radar_rssi_format">%1$d dBm</string>
+    <string name="nearby_radar_smoothing_format">Moyennage : %1$d s</string>
+    <string name="nearby_radar_smoothing_label_a11y">Fenêtre de moyennage en secondes</string>
 </resources>

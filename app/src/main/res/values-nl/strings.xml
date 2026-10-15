@@ -435,4 +435,7 @@ Als Apple het verzoek simpelweg weigerde, is even wachten en opnieuw proberen he
     <string name="nearby_device_offline">offline</string>
     <string name="nearby_radar_title">Radar</string>
     <string name="nearby_radar_lost">Uit beeld verloren - loop langzaam rond</string>
+    <string name="nearby_radar_rssi_format">%1$d dBm</string>
+    <string name="nearby_radar_smoothing_format">Middeling: %1$d s</string>
+    <string name="nearby_radar_smoothing_label_a11y">Middelingsvenster in seconden</string>
 </resources>

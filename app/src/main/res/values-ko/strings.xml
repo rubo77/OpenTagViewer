@@ -435,4 +435,7 @@ Apple이 요청을 거부한 것뿐이라면 잠시 기다렸다가 다시 시�
     <string name="nearby_device_offline">오프라인</string>
     <string name="nearby_radar_title">레이더</string>
     <string name="nearby_radar_lost">신호를 놓쳤습니다 - 천천히 움직여 보세요</string>
+    <string name="nearby_radar_rssi_format">%1$d dBm</string>
+    <string name="nearby_radar_smoothing_format">평균화: %1$d초</string>
+    <string name="nearby_radar_smoothing_label_a11y">평균화 창(초)</string>
 </resources>
